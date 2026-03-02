@@ -1,0 +1,195 @@
+{
+  "id": "2f7b6bd3ae6e",
+  "created_at": "2026-02-27T15:51:02.437305Z",
+  "company_name": "Window Film Depot",
+  "website": "https://www.windowfilmdepot.com/",
+  "sector_profile": {
+    "sector": "Construction",
+    "confidence": 0.55,
+    "software_systems": [
+      "Procore",
+      "Autodesk Construction Cloud",
+      "Buildertrend",
+      "Sage Intacct Construction"
+    ],
+    "equipment": [
+      "Excavators",
+      "Backhoes",
+      "Loaders",
+      "Concrete systems",
+      "Survey equipment"
+    ],
+    "evidence": [
+      "Keyword matches for Construction: 2"
+    ]
+  },
+  "locations": [
+    {
+      "address": "400 Glover St SE. Marietta, GA 30060",
+      "county": null,
+      "state": null,
+      "latitude": null,
+      "longitude": null,
+      "ga_tier": null,
+      "military_zone": null,
+      "ldct": null,
+      "opportunity_zone": null,
+      "special_designation": null,
+      "job_creation_threshold": null,
+      "per_job_credit_amount": null,
+      "zone_details": {},
+      "confidence": 0.1,
+      "evidence": [
+        "Unable to geocode address automatically"
+      ]
+    }
+  ],
+  "credits": [
+    {
+      "code": "GA_RETRAINING",
+      "name": "Georgia Retraining Tax Credit",
+      "status": "likely",
+      "rationale": "Sector software stack indicates periodic upskilling for systems adoption and process changes.",
+      "triggers": [
+        "Procore",
+        "Autodesk Construction Cloud",
+        "Buildertrend",
+        "Sage Intacct Construction"
+      ],
+      "assumptions": [
+        "Company has Georgia payroll tax liability",
+        "Training expenses are documented"
+      ],
+      "confidence": 0.72
+    },
+    {
+      "code": "FEDERAL_RD",
+      "name": "Federal R&D Tax Credit",
+      "status": "possible",
+      "rationale": "Website/notes include engineering, integration, or process-improvement signals.",
+      "triggers": [
+        "design"
+      ],
+      "assumptions": [
+        "Technical uncertainty and experimentation occurred",
+        "Qualified wage/supply data available"
+      ],
+      "confidence": 0.68
+    },
+    {
+      "code": "GA_RD",
+      "name": "Georgia R&D Tax Credit",
+      "status": "possible",
+      "rationale": "Georgia credit follows similar qualified research principles with state-specific base calculations.",
+      "triggers": [
+        "design"
+      ],
+      "assumptions": [
+        "Georgia nexus and qualified expenses",
+        "Prior year spend available for base-period computation"
+      ],
+      "confidence": 0.64
+    },
+    {
+      "code": "COST_SEGREGATION",
+      "name": "Cost Segregation Study",
+      "status": "likely",
+      "rationale": "Property acquisition/improvement signals suggest opportunity to accelerate depreciation.",
+      "triggers": [
+        "property",
+        "warehouse",
+        "building"
+      ],
+      "assumptions": [
+        "Commercial property acquired, built, or improved",
+        "Depreciable basis is material"
+      ],
+      "confidence": 0.74
+    },
+    {
+      "code": "GA_INVESTMENT",
+      "name": "Georgia Investment Tax Credit",
+      "status": "possible",
+      "rationale": "Expansion/capital signals combined with county tier may support Georgia investment incentives.",
+      "triggers": [
+        "opening"
+      ],
+      "assumptions": [
+        "Qualified investment property placed in service",
+        "Tier/location thresholds satisfied"
+      ],
+      "confidence": 0.48
+    },
+    {
+      "code": "MERP",
+      "name": "Self-Insured Medical Reimbursement Plan (MERP)",
+      "status": "possible",
+      "rationale": "Most mid-size employers can evaluate MERP/HRA-style structures for payroll tax and benefit efficiency.",
+      "triggers": [
+        "Employer-sponsored health benefit spend",
+        "Workforce size > 10 employees (to validate)"
+      ],
+      "assumptions": [
+        "Plan design meets ERISA/IRS requirements",
+        "Third-party administration is feasible"
+      ],
+      "confidence": 0.52
+    }
+  ],
+  "expansion_signals": [
+    "opening"
+  ],
+  "property_signals": [
+    "property",
+    "warehouse",
+    "building"
+  ],
+  "narrative": {
+    "ga_jtc_intro": "The GA JTC offers a dollar-for-dollar reduction of state income tax liability when creating new jobs in certain areas. Counties are designated Tier 1 through Tier 4, with Military Zones, Less Developed Census Tracts (LDCT), and Opportunity Zones often supporting lower thresholds and larger benefits.",
+    "ga_jtc_note": "Window Film Depot Georgia locations with corresponding tier designations and estimated credit benefits are shown below. Final thresholds may be NAICS dependent and should be validated.",
+    "retraining_intro": "The GA Retraining Tax Credit can provide up to 50% of eligible retraining costs, including wages of trainees, up to $1,250 per employee per year.",
+    "retraining_context": "There are many software systems and equipment platforms in the construction space that could qualify. If Window Film Depot implemented new systems or equipment and retrained existing employees, there may be meaningful savings available.",
+    "rd_intro": "Federal and Georgia R&D credits can provide tax relief on qualified technical activities, typically as a percentage of qualified research spend including eligible wages.",
+    "rd_examples_intro": "Examples of how Window Film Depot may qualify include:",
+    "costseg_intro": "Window Film Depot may be able to reduce taxes through cost segregation by accelerating depreciation on newly constructed, expanded, or purchased facilities.",
+    "costseg_detail": "For operations-heavy facilities, portions such as site improvements, electrical systems, specialized power, fabrication areas, and certain interior improvements may qualify for shorter depreciation lives.",
+    "costseg_bonus": "A substantial portion of commercial building basis (net of land) may be accelerated in year one, subject to current bonus depreciation rules and project facts."
+  },
+  "source_log": [
+    {
+      "source": "https://www.windowfilmdepot.com/",
+      "type": "website_page",
+      "detail": "Parsed homepage"
+    },
+    {
+      "source": "https://www.windowfilmdepot.com/blog/press-releases-news/",
+      "type": "error",
+      "detail": "Page fetch failed: 404 Client Error: Not Found for url: https://www.windowfilmdepot.com/press-releases-news/"
+    },
+    {
+      "source": "https://www.windowfilmdepot.com/locations/",
+      "type": "website_page",
+      "detail": "Parsed related page"
+    },
+    {
+      "source": "https://www.windowfilmdepot.com/about/",
+      "type": "website_page",
+      "detail": "Parsed related page"
+    },
+    {
+      "source": "https://www.windowfilmdepot.com/about/events/",
+      "type": "website_page",
+      "detail": "Parsed related page"
+    },
+    {
+      "source": "https://www.windowfilmdepot.com/about/events/school-safety-and-grant-funding/",
+      "type": "website_page",
+      "detail": "Parsed related page"
+    },
+    {
+      "source": "https://www.windowfilmdepot.com/",
+      "type": "extract",
+      "detail": "Crawled 6 page(s), detected 0 address candidate(s)"
+    }
+  ]
+}

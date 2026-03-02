@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{ report.company_name }} - Tax Incentive Summary</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <main class="container report-doc">
+      <header>
+        <h1>{{ report.company_name }} Tax Incentive Summary</h1>
+        <p><a class="button-link" href="/reports/{{ report.id }}/download/docx">Download Microsoft Word (.docx)</a></p>
+      </header>
+
+      <section class="doc-section">
+        <h2>GA Job Tax Credit</h2>
+        <p>{{ report.narrative.get('ga_jtc_intro', '') }}</p>
+        <p>{{ report.narrative.get('ga_jtc_note', '') }}</p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>GA Location</th>
+              <th>County</th>
+              <th>County Tier</th>
+              <th>Special Designation</th>
+              <th>Job Creation Threshold</th>
+              <th>Per Job Credit Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for loc in report.locations %}
+            <tr>
+              <td>{{ loc.address }}</td>
+              <td>{{ loc.county or '-' }}</td>
+              <td>{% if loc.ga_tier %}Tier {{ loc.ga_tier }}{% else %}Unmapped{% endif %}</td>
+              <td>{{ loc.special_designation or 'None' }}</td>
+              <td>{{ loc.job_creation_threshold or 'NAICS Dependent' }}</td>
+              <td>{{ loc.per_job_credit_amount or 'NAICS Dependent' }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </section>
+
+      <section class="doc-section">
+        <h2>Georgia Retraining Tax Credit</h2>
+        <p>{{ report.narrative.get('retraining_intro', '') }}</p>
+        <p>{{ report.narrative.get('retraining_context', '') }}</p>
+
+        <ul>
+          <li><strong>SOFTWARE SYSTEMS</strong></li>
+          {% for item in report.sector_profile.software_systems %}
+          <li>{{ item }}</li>
+          {% endfor %}
+        </ul>
+
+        <ul>
+          <li><strong>EQUIPMENT</strong></li>
+          {% for item in report.sector_profile.equipment %}
+          <li>{{ item }}</li>
+          {% endfor %}
+        </ul>
+      </section>
+
+      <section class="doc-section">
+        <h2>Federal &amp; State Research and Development Credit</h2>
+        <p>{{ report.narrative.get('rd_intro', '') }}</p>
+        <p>{{ report.narrative.get('rd_examples_intro', '') }}</p>
+        <ul>
+          <li><strong>Custom engineering &amp; design work</strong> - Project-specific systems, assemblies, or models requiring technical problem solving.</li>
+          <li><strong>Prefabrication &amp; fabrication innovation</strong> - Developing, testing, and refining builds or workflows for speed, safety, or efficiency.</li>
+          <li><strong>Modeling and coordination iteration</strong> - Iterating layouts and routing to resolve design and constructability constraints.</li>
+          <li><strong>New methods &amp; process improvement</strong> - Creating or refining installation/fabrication methods where outcomes were uncertain.</li>
+          <li><strong>Testing, prototyping &amp; troubleshooting</strong> - Field/shop testing and rework to validate designs or resolve performance issues.</li>
+        </ul>
+      </section>
+
+      <section class="doc-section">
+        <h2>Cost Segregation</h2>
+        <p>{{ report.narrative.get('costseg_intro', '') }}</p>
+        <p>{{ report.narrative.get('costseg_detail', '') }}</p>
+        <p>{{ report.narrative.get('costseg_bonus', '') }}</p>
+      </section>
+
+      {% if report.expansion_signals %}
+      <section class="doc-section">
+        <h2>Georgia Investment Tax Credit</h2>
+        <p>Expansion or capital investment signals were detected in the researched company content. Georgia investment credit eligibility can be impacted by county tier, qualified investment property, and placement-in-service timing.</p>
+        <p><strong>Detected signals:</strong> {{ report.expansion_signals|join(', ') }}</p>
+      </section>
+      {% endif %}
+
+      <section class="doc-section subtle">
+        <h3>Automation Evidence Log</h3>
+        <ul>
+          {% for src in report.source_log %}
+          <li>{{ src.source }} - {{ src.detail }}</li>
+          {% endfor %}
+        </ul>
+      </section>
+    </main>
+  </body>
+</html>

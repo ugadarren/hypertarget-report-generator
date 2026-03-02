@@ -1,0 +1,213 @@
+{
+  "id": "54c442a7988b",
+  "created_at": "2026-02-26T00:43:25.866997Z",
+  "company_name": "Rotary Corporation",
+  "website": "https://www.rotarycorp.com/",
+  "sector_profile": {
+    "sector": "Manufacturing",
+    "confidence": 0.44999999999999996,
+    "software_systems": [
+      "SAP S/4HANA",
+      "Oracle NetSuite",
+      "Plex",
+      "Epicor",
+      "Ignition SCADA"
+    ],
+    "equipment": [
+      "CNC machinery",
+      "Robotics",
+      "Conveyors",
+      "Packaging lines",
+      "QA instrumentation"
+    ],
+    "evidence": [
+      "Keyword matches for Manufacturing: 1"
+    ]
+  },
+  "locations": [
+    {
+      "address": "801 W Barnard St, Glennville, GA 30427",
+      "county": "Tattnall",
+      "state": "Georgia",
+      "latitude": 31.9382332,
+      "longitude": -81.9333982,
+      "ga_tier": "Bottom 40",
+      "military_zone": true,
+      "ldct": null,
+      "opportunity_zone": null,
+      "zone_details": {
+        "military_zone": {
+          "FID": 20,
+          "GEOID": "13267950402",
+          "GEOIDFQ": "1400000US13267950402",
+          "COUNTYFP": "267",
+          "COUNTY": "Tattnall County",
+          "NAME": "9504.02",
+          "Symbol": 1,
+          "NAMELSAD": "Census Tract 9504.02",
+          "FULLNAME": "Census Tract 9504.02; Tattnall County; Georgia",
+          "TRACTCE": "950402",
+          "TotPop": 2594,
+          "BelPov": 639,
+          "PerBP": 24.6,
+          "Eligible": "Eligible Under O.C.G.A. § 48-7-40.1(c)(2)",
+          "Shape_Leng": 60051.5550352,
+          "Industrial": "No",
+          "Shape_Le_1": 60051.5550352,
+          "Shape_Area": 94890810.7175,
+          "Shape__Area": 94890810.66992188,
+          "Shape__Length": 60051.55503517456
+        },
+        "tier": {
+          "FID": 143,
+          "STATEFP": "13",
+          "COUNTYFP": "267",
+          "COUNTYNS": "00347445",
+          "GEOID": "13267",
+          "GEOIDFQ": "0500000US13267",
+          "NAME": "Tattnall",
+          "NAMELSAD": "Tattnall County",
+          "LSAD": "06",
+          "CLASSFP": "H1",
+          "MTFCC": "G4020",
+          "CSAFP": " ",
+          "CBSAFP": " ",
+          "METDIVFP": " ",
+          "FUNCSTAT": "A",
+          "ALAND": 1245369508,
+          "AWATER": 19447411,
+          "INTPTLAT": "+32.0437683",
+          "INTPTLON": "-082.0592081",
+          "Shape_Leng": 2.01084413611,
+          "County": "Tattnall County",
+          "County_1": "Tattnall",
+          "Rank25": 38,
+          "Tier25": "Bottom 40",
+          "Rank24": 58,
+          "Tier24": "Tier 1",
+          "Movement": null,
+          "ObjectID_1": 31,
+          "Shape_Le_1": 2.01084413611,
+          "Shape__Area": 1765640057.1601562,
+          "Shape__Length": 243463.926758681
+        }
+      },
+      "confidence": 0.92,
+      "evidence": [
+        "OpenStreetMap Nominatim geocoding",
+        "ArcGIS DCA map spatial intersection"
+      ]
+    }
+  ],
+  "credits": [
+    {
+      "code": "GA_RETRAINING",
+      "name": "Georgia Retraining Tax Credit",
+      "status": "likely",
+      "rationale": "Sector software stack indicates periodic upskilling for systems adoption and process changes.",
+      "triggers": [
+        "SAP S/4HANA",
+        "Oracle NetSuite",
+        "Plex",
+        "Epicor"
+      ],
+      "assumptions": [
+        "Company has Georgia payroll tax liability",
+        "Training expenses are documented"
+      ],
+      "confidence": 0.72
+    },
+    {
+      "code": "FEDERAL_RD",
+      "name": "Federal R&D Tax Credit",
+      "status": "possible",
+      "rationale": "No explicit R&D keywords found; potential based on sector operations.",
+      "triggers": [
+        "Sector benchmark indicates iterative engineering activity"
+      ],
+      "assumptions": [
+        "Technical uncertainty and experimentation occurred",
+        "Qualified wage/supply data available"
+      ],
+      "confidence": 0.45
+    },
+    {
+      "code": "GA_RD",
+      "name": "Georgia R&D Tax Credit",
+      "status": "possible",
+      "rationale": "Georgia credit follows similar qualified research principles with state-specific base calculations.",
+      "triggers": [
+        "Potential qualifying development activity in operations"
+      ],
+      "assumptions": [
+        "Georgia nexus and qualified expenses",
+        "Prior year spend available for base-period computation"
+      ],
+      "confidence": 0.42
+    },
+    {
+      "code": "COST_SEGREGATION",
+      "name": "Cost Segregation Study",
+      "status": "possible",
+      "rationale": "Property acquisition/improvement signals suggest opportunity to accelerate depreciation.",
+      "triggers": [
+        "No explicit purchase event found; recommend confirmation"
+      ],
+      "assumptions": [
+        "Commercial property acquired, built, or improved",
+        "Depreciable basis is material"
+      ],
+      "confidence": 0.4
+    },
+    {
+      "code": "GA_INVESTMENT",
+      "name": "Georgia Investment Tax Credit",
+      "status": "possible",
+      "rationale": "Expansion/capital signals combined with county tier may support Georgia investment incentives.",
+      "triggers": [
+        "Need verification of recent capital investment in GA"
+      ],
+      "assumptions": [
+        "Qualified investment property placed in service",
+        "Tier/location thresholds satisfied"
+      ],
+      "confidence": 0.48
+    },
+    {
+      "code": "MERP",
+      "name": "Self-Insured Medical Reimbursement Plan (MERP)",
+      "status": "possible",
+      "rationale": "Most mid-size employers can evaluate MERP/HRA-style structures for payroll tax and benefit efficiency.",
+      "triggers": [
+        "Employer-sponsored health benefit spend",
+        "Workforce size > 10 employees (to validate)"
+      ],
+      "assumptions": [
+        "Plan design meets ERISA/IRS requirements",
+        "Third-party administration is feasible"
+      ],
+      "confidence": 0.52
+    }
+  ],
+  "expansion_signals": [],
+  "property_signals": [],
+  "narrative": {
+    "executive_summary": "Rotary Corporation appears positioned for multiple Georgia and federal tax incentives. This draft is machine-generated and should be finalized through analyst review.",
+    "location_analysis": "County tier placement drives eligibility and benefit sizing for several Georgia programs.",
+    "retraining_analysis": "Sector toolchain changes can support ongoing training credit capture.",
+    "rd_analysis": "Engineering and process-development indicators suggest potential qualified research activity.",
+    "property_analysis": "Property-related events can justify a cost segregation study to accelerate depreciation."
+  },
+  "source_log": [
+    {
+      "source": "https://www.rotarycorp.com/",
+      "type": "website",
+      "detail": "Homepage content parsed"
+    },
+    {
+      "source": "https://www.rotarycorp.com/",
+      "type": "extract",
+      "detail": "Detected 0 address candidates"
+    }
+  ]
+}

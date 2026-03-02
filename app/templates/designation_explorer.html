@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HyperTarget Designation Explorer</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <main class="explorer-page">
+      <aside class="explorer-sidebar card">
+        <h1>Designation Explorer</h1>
+        <p class="small-note">
+          Overlay Georgia designations from ArcGIS and search Google Maps businesses within selected zones.
+        </p>
+
+        <label>Business Search
+          <input id="business-query" type="text" placeholder="e.g., manufacturer, logistics, aerospace" />
+        </label>
+
+        <div class="inline-controls">
+          <button id="search-btn" type="button">Search Businesses</button>
+          <label class="inline-check">
+            <input id="auto-refresh" type="checkbox" checked />
+            Auto refresh on map move
+          </label>
+        </div>
+
+        <section>
+          <h2>Designations</h2>
+          <div id="designation-list" class="designation-list"></div>
+        </section>
+
+        <section>
+          <h2>Businesses In Selection</h2>
+          <p id="results-summary" class="small-note">No search run yet.</p>
+          <ul id="results-list" class="results-list"></ul>
+        </section>
+      </aside>
+
+      <section class="map-wrap">
+        <div id="map" class="map-canvas"></div>
+        {% if not google_maps_api_key %}
+        <div class="map-warning">
+          Set <code>GOOGLE_MAPS_API_KEY</code> in your environment to enable the map and business search.
+        </div>
+        {% endif %}
+      </section>
+    </main>
+
+    <script>
+      window.HYPERTARGET_CONFIG = {
+        hasGoogleMapsKey: {{ "true" if google_maps_api_key else "false" }}
+      };
+    </script>
+    <script src="/static/designation_explorer.js"></script>
+    {% if google_maps_api_key %}
+    <script
+      src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key }}&libraries=places,geometry&callback=initDesignationExplorer"
+      async
+      defer
+    ></script>
+    {% endif %}
+  </body>
+</html>

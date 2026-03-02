@@ -1,0 +1,195 @@
+{
+  "id": "8052edb99a0b",
+  "created_at": "2026-02-26T00:03:21.571038Z",
+  "company_name": "Fouts Fire",
+  "website": "https://foutsfire.com/",
+  "sector_profile": {
+    "sector": "Electrical Contracting",
+    "confidence": 0.55,
+    "software_systems": [
+      "Procore",
+      "Autodesk Construction Cloud",
+      "Accubid/Trimble Estimation",
+      "ServiceTitan",
+      "Sage 300 Construction and Real Estate"
+    ],
+    "equipment": [
+      "Bucket trucks and service vans",
+      "Conduit benders and cable pullers",
+      "Power quality analyzers and thermal cameras",
+      "Lifts/scaffolding",
+      "Jobsite generators and temporary power systems"
+    ],
+    "evidence": [
+      "Keyword matches for Electrical Contracting: 2"
+    ]
+  },
+  "locations": [
+    {
+      "address": "138 Roberson Mill Rd, Milledgeville, GA 31061",
+      "county": "Baldwin",
+      "state": "Georgia",
+      "latitude": 33.0987761,
+      "longitude": -83.2579958,
+      "ga_tier": "Bottom 40",
+      "military_zone": null,
+      "ldct": null,
+      "opportunity_zone": null,
+      "zone_details": {
+        "tier": {
+          "FID": 156,
+          "STATEFP": "13",
+          "COUNTYFP": "009",
+          "COUNTYNS": "00345255",
+          "GEOID": "13009",
+          "GEOIDFQ": "0500000US13009",
+          "NAME": "Baldwin",
+          "NAMELSAD": "Baldwin County",
+          "LSAD": "06",
+          "CLASSFP": "H1",
+          "MTFCC": "G4020",
+          "CSAFP": " ",
+          "CBSAFP": "33300",
+          "METDIVFP": " ",
+          "FUNCSTAT": "A",
+          "ALAND": 670028049,
+          "AWATER": 24803188,
+          "INTPTLAT": "+33.0594897",
+          "INTPTLON": "-083.2554566",
+          "Shape_Leng": 1.55801634278,
+          "County": "Baldwin County",
+          "County_1": "Baldwin",
+          "Rank25": 37,
+          "Tier25": "Bottom 40",
+          "Rank24": 25,
+          "Tier24": "Bottom 40",
+          "Movement": " ",
+          "ObjectID_1": 1,
+          "Shape_Le_1": 1.55801634278,
+          "Shape__Area": 992120963.3632812,
+          "Shape__Length": 189418.8359627329
+        }
+      },
+      "confidence": 0.92,
+      "evidence": [
+        "OpenStreetMap Nominatim geocoding",
+        "ArcGIS DCA map spatial intersection"
+      ]
+    }
+  ],
+  "credits": [
+    {
+      "code": "GA_RETRAINING",
+      "name": "Georgia Retraining Tax Credit",
+      "status": "likely",
+      "rationale": "Sector software stack indicates periodic upskilling for systems adoption and process changes.",
+      "triggers": [
+        "Procore",
+        "Autodesk Construction Cloud",
+        "Accubid/Trimble Estimation",
+        "ServiceTitan"
+      ],
+      "assumptions": [
+        "Company has Georgia payroll tax liability",
+        "Training expenses are documented"
+      ],
+      "confidence": 0.72
+    },
+    {
+      "code": "FEDERAL_RD",
+      "name": "Federal R&D Tax Credit",
+      "status": "likely",
+      "rationale": "Website/notes include engineering, integration, or process-improvement signals.",
+      "triggers": [
+        "design",
+        "innovation"
+      ],
+      "assumptions": [
+        "Technical uncertainty and experimentation occurred",
+        "Qualified wage/supply data available"
+      ],
+      "confidence": 0.68
+    },
+    {
+      "code": "GA_RD",
+      "name": "Georgia R&D Tax Credit",
+      "status": "likely",
+      "rationale": "Georgia credit follows similar qualified research principles with state-specific base calculations.",
+      "triggers": [
+        "design",
+        "innovation"
+      ],
+      "assumptions": [
+        "Georgia nexus and qualified expenses",
+        "Prior year spend available for base-period computation"
+      ],
+      "confidence": 0.64
+    },
+    {
+      "code": "COST_SEGREGATION",
+      "name": "Cost Segregation Study",
+      "status": "likely",
+      "rationale": "Property acquisition/improvement signals suggest opportunity to accelerate depreciation.",
+      "triggers": [
+        "building"
+      ],
+      "assumptions": [
+        "Commercial property acquired, built, or improved",
+        "Depreciable basis is material"
+      ],
+      "confidence": 0.74
+    },
+    {
+      "code": "GA_INVESTMENT",
+      "name": "Georgia Investment Tax Credit",
+      "status": "possible",
+      "rationale": "Expansion/capital signals combined with county tier may support Georgia investment incentives.",
+      "triggers": [
+        "Need verification of recent capital investment in GA"
+      ],
+      "assumptions": [
+        "Qualified investment property placed in service",
+        "Tier/location thresholds satisfied"
+      ],
+      "confidence": 0.48
+    },
+    {
+      "code": "MERP",
+      "name": "Self-Insured Medical Reimbursement Plan (MERP)",
+      "status": "possible",
+      "rationale": "Most mid-size employers can evaluate MERP/HRA-style structures for payroll tax and benefit efficiency.",
+      "triggers": [
+        "Employer-sponsored health benefit spend",
+        "Workforce size > 10 employees (to validate)"
+      ],
+      "assumptions": [
+        "Plan design meets ERISA/IRS requirements",
+        "Third-party administration is feasible"
+      ],
+      "confidence": 0.52
+    }
+  ],
+  "expansion_signals": [],
+  "property_signals": [
+    "building"
+  ],
+  "narrative": {
+    "executive_summary": "Fouts Fire appears positioned for multiple Georgia and federal tax incentives. This draft is machine-generated and should be finalized through analyst review.",
+    "location_analysis": "County tier placement drives eligibility and benefit sizing for several Georgia programs.",
+    "retraining_analysis": "Sector toolchain changes can support ongoing training credit capture.",
+    "rd_analysis": "Engineering and process-development indicators suggest potential qualified research activity.",
+    "property_analysis": "Property-related events can justify a cost segregation study to accelerate depreciation."
+  },
+  "source_log": [
+    {
+      "source": "https://foutsfire.com/",
+      "type": "website",
+      "detail": "Homepage content parsed"
+    },
+    {
+      "source": "https://foutsfire.com/",
+      "type": "extract",
+      "detail": "Detected 2 address candidates"
+    }
+  ]
+}

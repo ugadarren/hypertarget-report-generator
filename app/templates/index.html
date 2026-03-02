@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HyperTarget Report Generator</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <main class="container">
+      <section class="hero">
+        <h1>Tax Incentive Report Generator</h1>
+        <p>Create Georgia-focused incentive assessments from a company website and address list.</p>
+        <p><a class="button-link" href="/designation-explorer">Open Designation Explorer</a></p>
+      </section>
+
+      <form class="card" method="post" action="/generate">
+        <label>Company Name
+          <input type="text" name="company_name" required placeholder="Ace Electric" />
+        </label>
+
+        <label>Website
+          <input type="url" name="website" placeholder="https://example.com" />
+        </label>
+
+        <label>Addresses (one per line)
+          <textarea name="addresses" rows="6" placeholder="123 Main St, Atlanta, GA 30303"></textarea>
+        </label>
+
+        <label>Optional Notes
+          <textarea name="notes" rows="4" placeholder="Paste expansion news, project details, hiring plans, etc."></textarea>
+        </label>
+
+        <button type="submit">Generate Report</button>
+      </form>
+    </main>
+  </body>
+</html>
