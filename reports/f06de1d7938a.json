@@ -1,0 +1,414 @@
+{
+  "id": "f06de1d7938a",
+  "created_at": "2026-03-04T01:04:17.044649Z",
+  "company_name": "Sailfish Boats",
+  "website": "https://www.sailfishboats.com",
+  "sector_profile": {
+    "sector_key": "automotive",
+    "sector": "Automotive and Components",
+    "company_description": "Sailfish Boats offers a wide range of high-quality family friendly fishing focused boats for both offshore and inshore use. Find the perfect boat to fit your needs and take your fishing game to the next level.",
+    "sector_summary": "Industry classification was inferred from website content and should be analyst-reviewed.",
+    "rd_focus_examples": [
+      "Component design and testing for performance, reliability, and manufacturability.",
+      "Automation experiments to improve cycle time and defect rates.",
+      "Validation of process changes against quality and compliance targets."
+    ],
+    "rd_feasibility": "likely",
+    "rd_confidence": 0.8,
+    "rd_rationale": "Industry-based estimate for Automotive and Components.",
+    "rd_rows": [
+      {
+        "category": "Potential R&D Activity Group 1",
+        "activities": [
+          "Component design and testing for performance, reliability, and manufacturability.",
+          "Automation experiments to improve cycle time and defect rates."
+        ]
+      },
+      {
+        "category": "Potential R&D Activity Group 2",
+        "activities": [
+          "Validation of process changes against quality and compliance targets."
+        ]
+      }
+    ],
+    "investment_credit_applicable": false,
+    "retraining_rows": [
+      {
+        "type": "Software",
+        "category": "Industry Management Software",
+        "applicable_programs": [
+          "Siemens Teamcenter",
+          "SAP",
+          "PLM platforms",
+          "MES"
+        ]
+      },
+      {
+        "type": "Software",
+        "category": "Operations / ERP Software",
+        "applicable_programs": [
+          "QMS software"
+        ]
+      },
+      {
+        "type": "Equipment",
+        "category": "Operational Equipment",
+        "applicable_programs": [
+          "Assembly robotics",
+          "CNC machining",
+          "Vision inspection systems",
+          "End-of-line test rigs"
+        ]
+      }
+    ],
+    "software_systems": [
+      "Siemens Teamcenter",
+      "SAP",
+      "PLM platforms",
+      "MES",
+      "QMS software"
+    ],
+    "equipment": [
+      "Assembly robotics",
+      "CNC machining",
+      "Vision inspection systems",
+      "End-of-line test rigs"
+    ],
+    "evidence": [
+      "Keyword-based website sector inference (score=6)",
+      "Resolved sector key: automotive",
+      "automotive:6",
+      "telecommunications:6",
+      "electrical_contracting:4"
+    ]
+  },
+  "locations": [
+    {
+      "address": "2501 Industrial Park Dr, Cairo, GA 39828",
+      "county": "Grady",
+      "state": "Georgia",
+      "latitude": 30.8694784,
+      "longitude": -84.1800588,
+      "ga_tier": "1",
+      "military_zone": null,
+      "ldct": null,
+      "opportunity_zone": null,
+      "special_designation": "None",
+      "job_creation_threshold": "NAICS Dependent",
+      "per_job_credit_amount": "NAICS Dependent",
+      "investment_tax_credit_pct": "8%",
+      "zone_details": {
+        "tier": {
+          "FID": 139,
+          "STATEFP": "13",
+          "COUNTYFP": "131",
+          "COUNTYNS": "00351261",
+          "GEOID": "13131",
+          "GEOIDFQ": "0500000US13131",
+          "NAME": "Grady",
+          "NAMELSAD": "Grady County",
+          "LSAD": "06",
+          "CLASSFP": "H1",
+          "MTFCC": "G4020",
+          "CSAFP": " ",
+          "CBSAFP": "45620",
+          "METDIVFP": " ",
+          "FUNCSTAT": "A",
+          "ALAND": 1177052070,
+          "AWATER": 15026015,
+          "INTPTLAT": "+30.8759004",
+          "INTPTLON": "-084.2449647",
+          "Shape_Leng": 1.39899482753,
+          "County": "Grady County",
+          "County_1": "Grady",
+          "Rank25": 65,
+          "Tier25": "Tier 1",
+          "Rank24": 75,
+          "Tier24": "Tier 2",
+          "Movement": "Low",
+          "ObjectID_1": 53,
+          "Shape_Le_1": 1.39899482753,
+          "Shape__Area": 1623386536.5761719,
+          "Shape__Length": 169878.88148028348
+        },
+        "_diagnostics": [
+          {
+            "scope": "geocode",
+            "status": "ok",
+            "detail": "Address geocoded successfully with nominatim."
+          },
+          {
+            "scope": "military_zone",
+            "status": "no_match",
+            "detail": "No intersecting feature from https://services2.arcgis.com/Gqyymy5JISeLzyNM/arcgis/rest/services/MZ_Eligible_Tracts_25/FeatureServer/0"
+          },
+          {
+            "scope": "ldct",
+            "status": "no_match",
+            "detail": "No intersecting feature from https://services2.arcgis.com/Gqyymy5JISeLzyNM/arcgis/rest/services/Job_Tax_Credit_Incentives_2025_WFL1/FeatureServer/3"
+          },
+          {
+            "scope": "tier",
+            "status": "matched",
+            "detail": "Matched polygon from https://services2.arcgis.com/Gqyymy5JISeLzyNM/arcgis/rest/services/Job_Tax_Credit_Incentives_2025_WFL1/FeatureServer/2"
+          },
+          {
+            "scope": "opportunity_zone",
+            "status": "no_match",
+            "detail": "No intersecting feature from https://services2.arcgis.com/Gqyymy5JISeLzyNM/arcgis/rest/services/GA_OZDec2017/FeatureServer/0"
+          }
+        ]
+      },
+      "confidence": 0.92,
+      "evidence": [
+        "OpenStreetMap Nominatim geocoding",
+        "ArcGIS DCA map spatial intersection"
+      ]
+    }
+  ],
+  "credits": [
+    {
+      "code": "GA_RETRAINING",
+      "name": "Georgia Retraining Tax Credit",
+      "status": "likely",
+      "rationale": "Sector software stack indicates periodic upskilling for systems adoption and process changes.",
+      "triggers": [
+        "Siemens Teamcenter",
+        "SAP",
+        "PLM platforms",
+        "MES"
+      ],
+      "assumptions": [
+        "Company has Georgia payroll tax liability",
+        "Training expenses are documented"
+      ],
+      "confidence": 0.72
+    },
+    {
+      "code": "FEDERAL_RD",
+      "name": "Federal R&D Tax Credit",
+      "status": "likely",
+      "rationale": "Industry-based estimate for Automotive and Components.",
+      "triggers": [
+        "engineering",
+        "design",
+        "development",
+        "innovation"
+      ],
+      "assumptions": [
+        "Technical uncertainty and experimentation occurred",
+        "Qualified wage/supply data available"
+      ],
+      "confidence": 0.8
+    },
+    {
+      "code": "GA_RD",
+      "name": "Georgia R&D Tax Credit",
+      "status": "likely",
+      "rationale": "Georgia credit follows similar qualified research principles with state-specific base calculations.",
+      "triggers": [
+        "engineering",
+        "design",
+        "development",
+        "innovation"
+      ],
+      "assumptions": [
+        "Georgia nexus and qualified expenses",
+        "Prior year spend available for base-period computation"
+      ],
+      "confidence": 0.76
+    },
+    {
+      "code": "COST_SEGREGATION",
+      "name": "Cost Segregation Study",
+      "status": "likely",
+      "rationale": "Property acquisition/improvement signals suggest opportunity to accelerate depreciation.",
+      "triggers": [
+        "building"
+      ],
+      "assumptions": [
+        "Commercial property acquired, built, or improved",
+        "Depreciable basis is material"
+      ],
+      "confidence": 0.74
+    },
+    {
+      "code": "GA_INVESTMENT",
+      "name": "Georgia Investment Tax Credit",
+      "status": "unlikely",
+      "rationale": "Georgia Investment Tax Credit is generally targeted to qualifying manufacturing/telecommunications investments; detected industry does not appear to meet this program scope.",
+      "triggers": [
+        "Detected industry: Automotive and Components"
+      ],
+      "assumptions": [
+        "Qualified investment property placed in service",
+        "Tier/location thresholds satisfied"
+      ],
+      "confidence": 0.9
+    },
+    {
+      "code": "MERP",
+      "name": "Self-Insured Medical Reimbursement Plan (MERP)",
+      "status": "possible",
+      "rationale": "Most mid-size employers can evaluate MERP/HRA-style structures for payroll tax and benefit efficiency.",
+      "triggers": [
+        "Employer-sponsored health benefit spend",
+        "Workforce size > 10 employees (to validate)"
+      ],
+      "assumptions": [
+        "Plan design meets ERISA/IRS requirements",
+        "Third-party administration is feasible"
+      ],
+      "confidence": 0.52
+    }
+  ],
+  "expansion_signals": [
+    "expansion",
+    "expanding",
+    "construction"
+  ],
+  "property_signals": [
+    "building"
+  ],
+  "narrative": {
+    "sector_title": "Automotive and Components",
+    "company_description": "Sailfish Boats offers a wide range of high-quality family friendly fishing focused boats for both offshore and inshore use. Find the perfect boat to fit your needs and take your fishing game to the next level.",
+    "sector_summary": "Industry classification was inferred from website content and should be analyst-reviewed.",
+    "sector_source": "keyword_fallback",
+    "ga_jtc_intro": "The GA JTC offers a dollar-for-dollar reduction of state income tax liability when creating new jobs in certain areas. Counties are designated Tier 1 through Tier 4, with Military Zones, Less Developed Census Tracts (LDCT), and Opportunity Zones often supporting lower thresholds and larger benefits.",
+    "ga_jtc_note": "Sailfish Boats Georgia locations with corresponding tier designations and estimated credit benefits are shown below. Final thresholds may be NAICS dependent and should be validated.",
+    "retraining_intro": "The GA Retraining Tax Credit can provide up to 50% of eligible retraining costs, including wages of trainees, up to $1,250 per employee per year.",
+    "retraining_context": "Below are industry-specific software and equipment categories with applicable programs. If implemented and employees were retrained to use them, these categories may support GA RTC claims.",
+    "rd_intro": "Federal and Georgia R&D credits can provide tax relief on qualified technical activities, typically as a percentage of qualified research spend including eligible wages.",
+    "rd_examples_intro": "R&D feasibility and potential qualifying activities for Sailfish Boats:",
+    "rd_feasibility": "Likely",
+    "rd_confidence_pct": 80,
+    "rd_rationale": "Industry-based estimate for Automotive and Components.",
+    "rd_rows": [
+      {
+        "category": "Potential R&D Activity Group 1",
+        "activities": [
+          "Component design and testing for performance, reliability, and manufacturability.",
+          "Automation experiments to improve cycle time and defect rates."
+        ]
+      },
+      {
+        "category": "Potential R&D Activity Group 2",
+        "activities": [
+          "Validation of process changes against quality and compliance targets."
+        ]
+      }
+    ],
+    "rd_focus_examples": [
+      "Component design and testing for performance, reliability, and manufacturability.",
+      "Automation experiments to improve cycle time and defect rates.",
+      "Validation of process changes against quality and compliance targets."
+    ],
+    "costseg_intro": "Sailfish Boats may be able to reduce taxes through cost segregation by accelerating depreciation on newly constructed, expanded, or purchased facilities.",
+    "costseg_detail": "For operations-heavy facilities, portions such as site improvements, electrical systems, specialized power, fabrication areas, and certain interior improvements may qualify for shorter depreciation lives.",
+    "costseg_bonus": "A substantial portion of commercial building basis (net of land) may be accelerated in year one, subject to current bonus depreciation rules and project facts.",
+    "retraining_rows": [
+      {
+        "type": "Software",
+        "category": "Industry Management Software",
+        "applicable_programs": [
+          "Siemens Teamcenter",
+          "SAP",
+          "PLM platforms",
+          "MES"
+        ]
+      },
+      {
+        "type": "Software",
+        "category": "Operations / ERP Software",
+        "applicable_programs": [
+          "QMS software"
+        ]
+      },
+      {
+        "type": "Equipment",
+        "category": "Operational Equipment",
+        "applicable_programs": [
+          "Assembly robotics",
+          "CNC machining",
+          "Vision inspection systems",
+          "End-of-line test rigs"
+        ]
+      }
+    ],
+    "investment_status": "unlikely",
+    "investment_rationale": "Georgia Investment Tax Credit is generally targeted to qualifying manufacturing/telecommunications investments; detected industry does not appear to meet this program scope."
+  },
+  "source_log": [
+    {
+      "source": "https://www.sailfishboats.com",
+      "type": "website_page",
+      "detail": "Parsed homepage"
+    },
+    {
+      "source": "https://www.sailfishboats.com/news-and-blogs",
+      "type": "website_page",
+      "detail": "Parsed related page"
+    },
+    {
+      "source": "https://www.sailfishboats.com/model/236-dual-console-family-fishing-boat",
+      "type": "website_page",
+      "detail": "Parsed related page"
+    },
+    {
+      "source": "https://www.sailfishboats.com/news",
+      "type": "website_page",
+      "detail": "Parsed related page"
+    },
+    {
+      "source": "https://www.sailfishboats.com/newsroom",
+      "type": "error",
+      "detail": "Page fetch failed: 404 Client Error: Not Found for url: https://www.sailfishboats.com/newsroom"
+    },
+    {
+      "source": "https://www.sailfishboats.com/press",
+      "type": "error",
+      "detail": "Page fetch failed: 404 Client Error: Not Found for url: https://www.sailfishboats.com/press"
+    },
+    {
+      "source": "https://www.sailfishboats.com/media",
+      "type": "error",
+      "detail": "Page fetch failed: 404 Client Error: Not Found for url: https://www.sailfishboats.com/media"
+    },
+    {
+      "source": "https://www.sailfishboats.com/about",
+      "type": "error",
+      "detail": "Page fetch failed: 404 Client Error: Not Found for url: https://www.sailfishboats.com/about"
+    },
+    {
+      "source": "https://www.sailfishboats.com/locations",
+      "type": "error",
+      "detail": "Page fetch failed: 404 Client Error: Not Found for url: https://www.sailfishboats.com/locations"
+    },
+    {
+      "source": "https://www.sailfishboats.com/contact",
+      "type": "error",
+      "detail": "Page fetch failed: 404 Client Error: Not Found for url: https://www.sailfishboats.com/contact"
+    },
+    {
+      "source": "https://www.sailfishboats.com",
+      "type": "extract",
+      "detail": "Crawled 10 page(s), checked 13 candidate links, detected 0 address candidate(s)"
+    },
+    {
+      "source": "openai",
+      "type": "llm_error",
+      "detail": "LLM sector detection failed: Client error '429 Too Many Requests' for url 'https://api.openai.com/v1/responses'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/429"
+    },
+    {
+      "source": "sector",
+      "type": "fallback",
+      "detail": "Applied keyword-based sector inference: Automotive and Components"
+    },
+    {
+      "source": "openai",
+      "type": "llm_error",
+      "detail": "LLM enrichment failed: Client error '429 Too Many Requests' for url 'https://api.openai.com/v1/responses'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/429"
+    }
+  ]
+}

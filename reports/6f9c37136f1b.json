@@ -1,0 +1,315 @@
+{
+  "id": "6f9c37136f1b",
+  "created_at": "2026-03-04T01:03:23.776533Z",
+  "company_name": "TQ Logistics",
+  "website": "https://tqlogistics.com",
+  "sector_profile": {
+    "sector_key": "logistics",
+    "sector": "Logistics and Distribution",
+    "company_description": "TQ Logistics is being evaluated under the sector: Logistics and Distribution.",
+    "sector_summary": "Sector logic in this report is based on your manual industry input.",
+    "rd_focus_examples": [
+      "Warehouse flow redesign and testing for pick/pack optimization.",
+      "Route and dispatch algorithm testing to improve delivery performance.",
+      "Automation pilots for sortation and inventory accuracy improvements."
+    ],
+    "rd_feasibility": "possible",
+    "rd_confidence": 0.45,
+    "rd_rationale": "Industry-based estimate for Logistics and Distribution.",
+    "rd_rows": [
+      {
+        "category": "Potential R&D Activity Group 1",
+        "activities": [
+          "Warehouse flow redesign and testing for pick/pack optimization.",
+          "Route and dispatch algorithm testing to improve delivery performance."
+        ]
+      },
+      {
+        "category": "Potential R&D Activity Group 2",
+        "activities": [
+          "Automation pilots for sortation and inventory accuracy improvements."
+        ]
+      }
+    ],
+    "investment_credit_applicable": false,
+    "retraining_rows": [
+      {
+        "type": "Software",
+        "category": "Industry Management Software",
+        "applicable_programs": [
+          "Manhattan WMS",
+          "Oracle WMS",
+          "SAP EWM",
+          "Samsara"
+        ]
+      },
+      {
+        "type": "Software",
+        "category": "Operations / ERP Software",
+        "applicable_programs": [
+          "Motive",
+          "TMS platforms"
+        ]
+      },
+      {
+        "type": "Equipment",
+        "category": "Operational Equipment",
+        "applicable_programs": [
+          "Forklifts",
+          "Sortation systems",
+          "Racking",
+          "RF scanners"
+        ]
+      },
+      {
+        "type": "Equipment",
+        "category": "Testing / Diagnostic Equipment",
+        "applicable_programs": [
+          "Dock equipment",
+          "AMRs/automation"
+        ]
+      }
+    ],
+    "software_systems": [
+      "Manhattan WMS",
+      "Oracle WMS",
+      "SAP EWM",
+      "Samsara",
+      "Motive",
+      "TMS platforms"
+    ],
+    "equipment": [
+      "Forklifts",
+      "Sortation systems",
+      "Racking",
+      "RF scanners",
+      "Dock equipment",
+      "AMRs/automation"
+    ],
+    "evidence": [
+      "Manual sector input: Logistics and Distribution",
+      "Resolved sector key: logistics"
+    ]
+  },
+  "locations": [
+    {
+      "address": "5901 Goshen Springs Rd, Norcross, GA 30071",
+      "county": null,
+      "state": null,
+      "latitude": null,
+      "longitude": null,
+      "ga_tier": null,
+      "military_zone": null,
+      "ldct": null,
+      "opportunity_zone": null,
+      "special_designation": null,
+      "job_creation_threshold": null,
+      "per_job_credit_amount": null,
+      "investment_tax_credit_pct": null,
+      "zone_details": {
+        "_diagnostics": [
+          {
+            "scope": "geocode",
+            "status": "failed",
+            "detail": "Address could not be geocoded by Nominatim, ArcGIS World Geocoder, or U.S. Census Geocoder."
+          }
+        ]
+      },
+      "confidence": 0.1,
+      "evidence": [
+        "Unable to geocode address automatically"
+      ]
+    }
+  ],
+  "credits": [
+    {
+      "code": "GA_RETRAINING",
+      "name": "Georgia Retraining Tax Credit",
+      "status": "likely",
+      "rationale": "Sector software stack indicates periodic upskilling for systems adoption and process changes.",
+      "triggers": [
+        "Manhattan WMS",
+        "Oracle WMS",
+        "SAP EWM",
+        "Samsara"
+      ],
+      "assumptions": [
+        "Company has Georgia payroll tax liability",
+        "Training expenses are documented"
+      ],
+      "confidence": 0.72
+    },
+    {
+      "code": "FEDERAL_RD",
+      "name": "Federal R&D Tax Credit",
+      "status": "possible",
+      "rationale": "Industry-based estimate for Logistics and Distribution.",
+      "triggers": [
+        "Warehouse flow redesign and testing for pick/pack optimization.",
+        "Route and dispatch algorithm testing to improve delivery performance.",
+        "Automation pilots for sortation and inventory accuracy improvements."
+      ],
+      "assumptions": [
+        "Technical uncertainty and experimentation occurred",
+        "Qualified wage/supply data available"
+      ],
+      "confidence": 0.45
+    },
+    {
+      "code": "GA_RD",
+      "name": "Georgia R&D Tax Credit",
+      "status": "possible",
+      "rationale": "Georgia credit follows similar qualified research principles with state-specific base calculations.",
+      "triggers": [
+        "Warehouse flow redesign and testing for pick/pack optimization.",
+        "Route and dispatch algorithm testing to improve delivery performance.",
+        "Automation pilots for sortation and inventory accuracy improvements."
+      ],
+      "assumptions": [
+        "Georgia nexus and qualified expenses",
+        "Prior year spend available for base-period computation"
+      ],
+      "confidence": 0.41000000000000003
+    },
+    {
+      "code": "COST_SEGREGATION",
+      "name": "Cost Segregation Study",
+      "status": "possible",
+      "rationale": "Property acquisition/improvement signals suggest opportunity to accelerate depreciation.",
+      "triggers": [
+        "No explicit purchase event found; recommend confirmation"
+      ],
+      "assumptions": [
+        "Commercial property acquired, built, or improved",
+        "Depreciable basis is material"
+      ],
+      "confidence": 0.4
+    },
+    {
+      "code": "GA_INVESTMENT",
+      "name": "Georgia Investment Tax Credit",
+      "status": "unlikely",
+      "rationale": "Georgia Investment Tax Credit is generally targeted to qualifying manufacturing/telecommunications investments; detected industry does not appear to meet this program scope.",
+      "triggers": [
+        "Detected industry: Logistics and Distribution"
+      ],
+      "assumptions": [
+        "Qualified investment property placed in service",
+        "Tier/location thresholds satisfied"
+      ],
+      "confidence": 0.9
+    },
+    {
+      "code": "MERP",
+      "name": "Self-Insured Medical Reimbursement Plan (MERP)",
+      "status": "possible",
+      "rationale": "Most mid-size employers can evaluate MERP/HRA-style structures for payroll tax and benefit efficiency.",
+      "triggers": [
+        "Employer-sponsored health benefit spend",
+        "Workforce size > 10 employees (to validate)"
+      ],
+      "assumptions": [
+        "Plan design meets ERISA/IRS requirements",
+        "Third-party administration is feasible"
+      ],
+      "confidence": 0.52
+    }
+  ],
+  "expansion_signals": [],
+  "property_signals": [],
+  "narrative": {
+    "sector_title": "Logistics and Distribution",
+    "company_description": "TQ Logistics is being evaluated under the sector: Logistics and Distribution.",
+    "sector_summary": "Sector logic in this report is based on your manual industry input.",
+    "sector_source": "manual",
+    "ga_jtc_intro": "The GA JTC offers a dollar-for-dollar reduction of state income tax liability when creating new jobs in certain areas. Counties are designated Tier 1 through Tier 4, with Military Zones, Less Developed Census Tracts (LDCT), and Opportunity Zones often supporting lower thresholds and larger benefits.",
+    "ga_jtc_note": "TQ Logistics Georgia locations with corresponding tier designations and estimated credit benefits are shown below. Final thresholds may be NAICS dependent and should be validated.",
+    "retraining_intro": "The GA Retraining Tax Credit can provide up to 50% of eligible retraining costs, including wages of trainees, up to $1,250 per employee per year.",
+    "retraining_context": "Below are industry-specific software and equipment categories with applicable programs. If implemented and employees were retrained to use them, these categories may support GA RTC claims.",
+    "rd_intro": "Federal and Georgia R&D credits can provide tax relief on qualified technical activities, typically as a percentage of qualified research spend including eligible wages.",
+    "rd_examples_intro": "R&D feasibility and potential qualifying activities for TQ Logistics:",
+    "rd_feasibility": "Possible",
+    "rd_confidence_pct": 45,
+    "rd_rationale": "Industry-based estimate for Logistics and Distribution.",
+    "rd_rows": [
+      {
+        "category": "Potential R&D Activity Group 1",
+        "activities": [
+          "Warehouse flow redesign and testing for pick/pack optimization.",
+          "Route and dispatch algorithm testing to improve delivery performance."
+        ]
+      },
+      {
+        "category": "Potential R&D Activity Group 2",
+        "activities": [
+          "Automation pilots for sortation and inventory accuracy improvements."
+        ]
+      }
+    ],
+    "rd_focus_examples": [
+      "Warehouse flow redesign and testing for pick/pack optimization.",
+      "Route and dispatch algorithm testing to improve delivery performance.",
+      "Automation pilots for sortation and inventory accuracy improvements."
+    ],
+    "costseg_intro": "TQ Logistics may be able to reduce taxes through cost segregation by accelerating depreciation on newly constructed, expanded, or purchased facilities.",
+    "costseg_detail": "For operations-heavy facilities, portions such as site improvements, electrical systems, specialized power, fabrication areas, and certain interior improvements may qualify for shorter depreciation lives.",
+    "costseg_bonus": "A substantial portion of commercial building basis (net of land) may be accelerated in year one, subject to current bonus depreciation rules and project facts.",
+    "retraining_rows": [
+      {
+        "type": "Software",
+        "category": "Industry Management Software",
+        "applicable_programs": [
+          "Manhattan WMS",
+          "Oracle WMS",
+          "SAP EWM",
+          "Samsara"
+        ]
+      },
+      {
+        "type": "Software",
+        "category": "Operations / ERP Software",
+        "applicable_programs": [
+          "Motive",
+          "TMS platforms"
+        ]
+      },
+      {
+        "type": "Equipment",
+        "category": "Operational Equipment",
+        "applicable_programs": [
+          "Forklifts",
+          "Sortation systems",
+          "Racking",
+          "RF scanners"
+        ]
+      },
+      {
+        "type": "Equipment",
+        "category": "Testing / Diagnostic Equipment",
+        "applicable_programs": [
+          "Dock equipment",
+          "AMRs/automation"
+        ]
+      }
+    ],
+    "investment_status": "unlikely",
+    "investment_rationale": "Georgia Investment Tax Credit is generally targeted to qualifying manufacturing/telecommunications investments; detected industry does not appear to meet this program scope."
+  },
+  "source_log": [
+    {
+      "source": "https://tqlogistics.com",
+      "type": "error",
+      "detail": "Page fetch failed: HTTPSConnectionPool(host='tqlogistics.com', port=443): Max retries exceeded with url: / (Caused by NameResolutionError(\"HTTPSConnection(host='tqlogistics.com', port=443): Failed to resolve 'tqlogistics.com' ([Errno 8] nodename nor servname provided, or not known)\"))"
+    },
+    {
+      "source": "sector",
+      "type": "manual",
+      "detail": "Used manually entered sector: Logistics and Distribution"
+    },
+    {
+      "source": "openai",
+      "type": "llm",
+      "detail": "OPENAI_API_KEY not configured; used deterministic sector profile."
+    }
+  ]
+}

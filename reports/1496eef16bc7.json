@@ -1,0 +1,285 @@
+{
+  "id": "1496eef16bc7",
+  "created_at": "2026-03-04T00:11:15.627597Z",
+  "company_name": "DefenseLite",
+  "website": "https://defenselite.com",
+  "sector_profile": {
+    "sector_key": "manufacturing",
+    "sector": "Manufacturing",
+    "company_description": "DefenseLite is being evaluated under the manually selected sector: Manufacturing.",
+    "sector_summary": "Sector logic in this report is based on your manual industry input, not automatic website classification.",
+    "rd_focus_examples": [
+      "Process optimization and yield improvement experiments on production lines.",
+      "Prototype design and validation for new products and components.",
+      "Automation/control tuning to resolve technical uncertainty in throughput and quality."
+    ],
+    "investment_credit_applicable": true,
+    "retraining_rows": [
+      {
+        "type": "Software",
+        "category": "ERP / Manufacturing Planning",
+        "applicable_programs": [
+          "SAP S/4HANA",
+          "Oracle NetSuite",
+          "Epicor",
+          "Infor CloudSuite"
+        ]
+      },
+      {
+        "type": "Software",
+        "category": "Manufacturing Execution (MES)",
+        "applicable_programs": [
+          "Plex",
+          "Siemens Opcenter",
+          "Tulip",
+          "Ignition MES"
+        ]
+      },
+      {
+        "type": "Equipment",
+        "category": "Automation / Robotics",
+        "applicable_programs": [
+          "Fanuc robotics",
+          "ABB robotics",
+          "Yaskawa systems",
+          "Universal Robots"
+        ]
+      },
+      {
+        "type": "Equipment",
+        "category": "Production & QC Equipment",
+        "applicable_programs": [
+          "CNC machining centers",
+          "Vision inspection systems",
+          "QA instrumentation",
+          "Conveyor sortation systems"
+        ]
+      }
+    ],
+    "software_systems": [
+      "SAP S/4HANA",
+      "Oracle NetSuite",
+      "Plex",
+      "Epicor",
+      "Ignition SCADA",
+      "MES platforms"
+    ],
+    "equipment": [
+      "CNC machinery",
+      "Robotics",
+      "Conveyors",
+      "Packaging lines",
+      "QA instrumentation",
+      "PLC systems"
+    ],
+    "evidence": [
+      "Manual sector input: Manufacturing",
+      "Resolved sector key: manufacturing"
+    ]
+  },
+  "locations": [
+    {
+      "address": "123 Main St, Atlanta, GA 30303",
+      "county": null,
+      "state": null,
+      "latitude": null,
+      "longitude": null,
+      "ga_tier": null,
+      "military_zone": null,
+      "ldct": null,
+      "opportunity_zone": null,
+      "special_designation": null,
+      "job_creation_threshold": null,
+      "per_job_credit_amount": null,
+      "investment_tax_credit_pct": null,
+      "zone_details": {},
+      "confidence": 0.1,
+      "evidence": [
+        "Unable to geocode address automatically"
+      ]
+    }
+  ],
+  "credits": [
+    {
+      "code": "GA_RETRAINING",
+      "name": "Georgia Retraining Tax Credit",
+      "status": "likely",
+      "rationale": "Sector software stack indicates periodic upskilling for systems adoption and process changes.",
+      "triggers": [
+        "SAP S/4HANA",
+        "Oracle NetSuite",
+        "Plex",
+        "Epicor"
+      ],
+      "assumptions": [
+        "Company has Georgia payroll tax liability",
+        "Training expenses are documented"
+      ],
+      "confidence": 0.72
+    },
+    {
+      "code": "FEDERAL_RD",
+      "name": "Federal R&D Tax Credit",
+      "status": "possible",
+      "rationale": "No explicit R&D keywords found; potential based on manufacturing operations.",
+      "triggers": [
+        "Process optimization and yield improvement experiments on production lines.",
+        "Prototype design and validation for new products and components.",
+        "Automation/control tuning to resolve technical uncertainty in throughput and quality."
+      ],
+      "assumptions": [
+        "Technical uncertainty and experimentation occurred",
+        "Qualified wage/supply data available"
+      ],
+      "confidence": 0.45
+    },
+    {
+      "code": "GA_RD",
+      "name": "Georgia R&D Tax Credit",
+      "status": "possible",
+      "rationale": "Georgia credit follows similar qualified research principles with state-specific base calculations.",
+      "triggers": [
+        "Process optimization and yield improvement experiments on production lines.",
+        "Prototype design and validation for new products and components.",
+        "Automation/control tuning to resolve technical uncertainty in throughput and quality."
+      ],
+      "assumptions": [
+        "Georgia nexus and qualified expenses",
+        "Prior year spend available for base-period computation"
+      ],
+      "confidence": 0.42
+    },
+    {
+      "code": "COST_SEGREGATION",
+      "name": "Cost Segregation Study",
+      "status": "likely",
+      "rationale": "Property acquisition/improvement signals suggest opportunity to accelerate depreciation.",
+      "triggers": [
+        "facility"
+      ],
+      "assumptions": [
+        "Commercial property acquired, built, or improved",
+        "Depreciable basis is material"
+      ],
+      "confidence": 0.74
+    },
+    {
+      "code": "GA_INVESTMENT",
+      "name": "Georgia Investment Tax Credit",
+      "status": "possible",
+      "rationale": "Expansion/capital signals combined with county tier may support Georgia investment incentives.",
+      "triggers": [
+        "new facility",
+        "expanded",
+        "opened",
+        "pattern:new\\s+(facility|plant|warehouse|location|headquarters|hq)",
+        "pattern:(opened|opening|opens)\\s+(a\\s+)?new\\s+(facility|plant|warehouse|location|office)"
+      ],
+      "assumptions": [
+        "Qualified investment property placed in service",
+        "Tier/location thresholds satisfied"
+      ],
+      "confidence": 0.48
+    },
+    {
+      "code": "MERP",
+      "name": "Self-Insured Medical Reimbursement Plan (MERP)",
+      "status": "possible",
+      "rationale": "Most mid-size employers can evaluate MERP/HRA-style structures for payroll tax and benefit efficiency.",
+      "triggers": [
+        "Employer-sponsored health benefit spend",
+        "Workforce size > 10 employees (to validate)"
+      ],
+      "assumptions": [
+        "Plan design meets ERISA/IRS requirements",
+        "Third-party administration is feasible"
+      ],
+      "confidence": 0.52
+    }
+  ],
+  "expansion_signals": [
+    "new facility",
+    "expanded",
+    "opened",
+    "pattern:new\\s+(facility|plant|warehouse|location|headquarters|hq)",
+    "pattern:(opened|opening|opens)\\s+(a\\s+)?new\\s+(facility|plant|warehouse|location|office)"
+  ],
+  "property_signals": [
+    "facility"
+  ],
+  "narrative": {
+    "sector_title": "Manufacturing",
+    "company_description": "DefenseLite is being evaluated under the manually selected sector: Manufacturing.",
+    "sector_summary": "Sector logic in this report is based on your manual industry input, not automatic website classification.",
+    "ga_jtc_intro": "The GA JTC offers a dollar-for-dollar reduction of state income tax liability when creating new jobs in certain areas. Counties are designated Tier 1 through Tier 4, with Military Zones, Less Developed Census Tracts (LDCT), and Opportunity Zones often supporting lower thresholds and larger benefits.",
+    "ga_jtc_note": "DefenseLite Georgia locations with corresponding tier designations and estimated credit benefits are shown below. Final thresholds may be NAICS dependent and should be validated.",
+    "retraining_intro": "The GA Retraining Tax Credit can provide up to 50% of eligible retraining costs, including wages of trainees, up to $1,250 per employee per year.",
+    "retraining_context": "Below are industry-specific software and equipment categories with applicable programs. If implemented and employees were retrained to use them, these categories may support GA RTC claims.",
+    "rd_intro": "Federal and Georgia R&D credits can provide tax relief on qualified technical activities, typically as a percentage of qualified research spend including eligible wages.",
+    "rd_examples_intro": "Examples of how DefenseLite may qualify include:",
+    "rd_focus_examples": [
+      "Process optimization and yield improvement experiments on production lines.",
+      "Prototype design and validation for new products and components.",
+      "Automation/control tuning to resolve technical uncertainty in throughput and quality."
+    ],
+    "costseg_intro": "DefenseLite may be able to reduce taxes through cost segregation by accelerating depreciation on newly constructed, expanded, or purchased facilities.",
+    "costseg_detail": "For operations-heavy facilities, portions such as site improvements, electrical systems, specialized power, fabrication areas, and certain interior improvements may qualify for shorter depreciation lives.",
+    "costseg_bonus": "A substantial portion of commercial building basis (net of land) may be accelerated in year one, subject to current bonus depreciation rules and project facts.",
+    "retraining_rows": [
+      {
+        "type": "Software",
+        "category": "ERP / Manufacturing Planning",
+        "applicable_programs": [
+          "SAP S/4HANA",
+          "Oracle NetSuite",
+          "Epicor",
+          "Infor CloudSuite"
+        ]
+      },
+      {
+        "type": "Software",
+        "category": "Manufacturing Execution (MES)",
+        "applicable_programs": [
+          "Plex",
+          "Siemens Opcenter",
+          "Tulip",
+          "Ignition MES"
+        ]
+      },
+      {
+        "type": "Equipment",
+        "category": "Automation / Robotics",
+        "applicable_programs": [
+          "Fanuc robotics",
+          "ABB robotics",
+          "Yaskawa systems",
+          "Universal Robots"
+        ]
+      },
+      {
+        "type": "Equipment",
+        "category": "Production & QC Equipment",
+        "applicable_programs": [
+          "CNC machining centers",
+          "Vision inspection systems",
+          "QA instrumentation",
+          "Conveyor sortation systems"
+        ]
+      }
+    ],
+    "investment_status": "possible",
+    "investment_rationale": "Expansion/capital signals combined with county tier may support Georgia investment incentives."
+  },
+  "source_log": [
+    {
+      "source": "https://defenselite.com",
+      "type": "error",
+      "detail": "Page fetch failed: HTTPSConnectionPool(host='defenselite.com', port=443): Max retries exceeded with url: / (Caused by NameResolutionError(\"HTTPSConnection(host='defenselite.com', port=443): Failed to resolve 'defenselite.com' ([Errno 8] nodename nor servname provided, or not known)\"))"
+    },
+    {
+      "source": "openai",
+      "type": "llm",
+      "detail": "OPENAI_API_KEY not configured; used deterministic sector profile."
+    }
+  ]
+}

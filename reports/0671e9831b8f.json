@@ -1,0 +1,376 @@
+{
+  "id": "0671e9831b8f",
+  "created_at": "2026-03-03T15:25:11.716434Z",
+  "company_name": "Verida",
+  "website": "https://www.verida.com",
+  "sector_profile": {
+    "sector_key": "healthcare",
+    "sector": "Healthcare",
+    "confidence": 0.96,
+    "company_description": "Verida | Connecting Life to Health Contact Us Members Transportation Providers Facilities Corporate About Verida Company Overview Leadership Team Our Services Careers VERIDA News Select Page Welcome to the future of transportation management",
+    "sector_summary": "Detected primary industry as Healthcare based on website language and keyword density.",
+    "rd_focus_examples": [
+      "Care delivery workflow design and iterative validation for improved patient outcomes.",
+      "Development and testing of analytics or triage models for operational decision support.",
+      "Integration and optimization of clinical data systems under technical constraints."
+    ],
+    "investment_credit_applicable": false,
+    "retraining_rows": [
+      {
+        "type": "Software",
+        "category": "Practice Management Software",
+        "applicable_programs": [
+          "athenaOne",
+          "eClinicalWorks",
+          "AdvancedMD",
+          "NextGen Office"
+        ]
+      },
+      {
+        "type": "Software",
+        "category": "CRM / Patient Engagement",
+        "applicable_programs": [
+          "Salesforce Health Cloud",
+          "HubSpot",
+          "Luma Health",
+          "Solutionreach"
+        ]
+      },
+      {
+        "type": "Software",
+        "category": "Document / Records Management",
+        "applicable_programs": [
+          "Epic",
+          "Cerner",
+          "OnBase",
+          "M-Files"
+        ]
+      },
+      {
+        "type": "Equipment",
+        "category": "Clinical & Diagnostic Equipment",
+        "applicable_programs": [
+          "Patient monitoring systems",
+          "Portable diagnostic devices",
+          "Imaging peripherals",
+          "Lab analyzers"
+        ]
+      },
+      {
+        "type": "Equipment",
+        "category": "Mobile Care Technology",
+        "applicable_programs": [
+          "Tablets for point-of-care",
+          "Telehealth carts",
+          "Vital-sign capture devices",
+          "Secure mobile workstations"
+        ]
+      }
+    ],
+    "software_systems": [
+      "Epic",
+      "Cerner",
+      "athenahealth",
+      "Salesforce Health Cloud",
+      "Care logistics platforms"
+    ],
+    "equipment": [
+      "Clinical monitoring devices",
+      "Diagnostic systems",
+      "Mobile care technology",
+      "Secure data infrastructure"
+    ],
+    "evidence": [
+      "Top sector matches: healthcare, energy_utilities",
+      "Best sector score (Healthcare): 18"
+    ]
+  },
+  "locations": [
+    {
+      "address": "843 Dallas Highway Villa Rica, Georgia 30180",
+      "county": "Carroll",
+      "state": "Georgia",
+      "latitude": 33.7474486,
+      "longitude": -84.9139742,
+      "ga_tier": "Tier 3",
+      "military_zone": null,
+      "ldct": null,
+      "opportunity_zone": null,
+      "special_designation": "None",
+      "job_creation_threshold": "NAICS Dependent",
+      "per_job_credit_amount": "NAICS Dependent",
+      "investment_tax_credit_pct": "3%",
+      "zone_details": {
+        "tier": {
+          "FID": 15,
+          "STATEFP": "13",
+          "COUNTYFP": "045",
+          "COUNTYNS": "00326650",
+          "GEOID": "13045",
+          "GEOIDFQ": "0500000US13045",
+          "NAME": "Carroll",
+          "NAMELSAD": "Carroll County",
+          "LSAD": "06",
+          "CLASSFP": "H1",
+          "MTFCC": "G4020",
+          "CSAFP": "122",
+          "CBSAFP": "12060",
+          "METDIVFP": "12054",
+          "FUNCSTAT": "A",
+          "ALAND": 1292705389,
+          "AWATER": 11882059,
+          "INTPTLAT": "+33.5822366",
+          "INTPTLON": "-085.0805272",
+          "Shape_Leng": 1.74771225005,
+          "County": "Carroll County",
+          "County_1": "Carroll",
+          "Rank25": 116,
+          "Tier25": "Tier 3",
+          "Rank24": 114,
+          "Tier24": "Tier 3",
+          "Movement": " ",
+          "ObjectID_1": 113,
+          "Shape_Le_1": 1.74771225005,
+          "Shape__Area": 1884647957.515625,
+          "Shape__Length": 210689.74105051704
+        }
+      },
+      "confidence": 0.92,
+      "evidence": [
+        "OpenStreetMap Nominatim geocoding",
+        "ArcGIS DCA map spatial intersection"
+      ]
+    }
+  ],
+  "credits": [
+    {
+      "code": "GA_RETRAINING",
+      "name": "Georgia Retraining Tax Credit",
+      "status": "likely",
+      "rationale": "Sector software stack indicates periodic upskilling for systems adoption and process changes.",
+      "triggers": [
+        "Epic",
+        "Cerner",
+        "athenahealth",
+        "Salesforce Health Cloud"
+      ],
+      "assumptions": [
+        "Company has Georgia payroll tax liability",
+        "Training expenses are documented"
+      ],
+      "confidence": 0.72
+    },
+    {
+      "code": "FEDERAL_RD",
+      "name": "Federal R&D Tax Credit",
+      "status": "possible",
+      "rationale": "No explicit R&D keywords found; potential based on healthcare operations.",
+      "triggers": [
+        "Care delivery workflow design and iterative validation for improved patient outcomes.",
+        "Development and testing of analytics or triage models for operational decision support.",
+        "Integration and optimization of clinical data systems under technical constraints."
+      ],
+      "assumptions": [
+        "Technical uncertainty and experimentation occurred",
+        "Qualified wage/supply data available"
+      ],
+      "confidence": 0.45
+    },
+    {
+      "code": "GA_RD",
+      "name": "Georgia R&D Tax Credit",
+      "status": "possible",
+      "rationale": "Georgia credit follows similar qualified research principles with state-specific base calculations.",
+      "triggers": [
+        "Care delivery workflow design and iterative validation for improved patient outcomes.",
+        "Development and testing of analytics or triage models for operational decision support.",
+        "Integration and optimization of clinical data systems under technical constraints."
+      ],
+      "assumptions": [
+        "Georgia nexus and qualified expenses",
+        "Prior year spend available for base-period computation"
+      ],
+      "confidence": 0.42
+    },
+    {
+      "code": "COST_SEGREGATION",
+      "name": "Cost Segregation Study",
+      "status": "possible",
+      "rationale": "Property acquisition/improvement signals suggest opportunity to accelerate depreciation.",
+      "triggers": [
+        "No explicit purchase event found; recommend confirmation"
+      ],
+      "assumptions": [
+        "Commercial property acquired, built, or improved",
+        "Depreciable basis is material"
+      ],
+      "confidence": 0.4
+    },
+    {
+      "code": "GA_INVESTMENT",
+      "name": "Georgia Investment Tax Credit",
+      "status": "unlikely",
+      "rationale": "Georgia Investment Tax Credit is generally targeted to qualifying manufacturing/telecommunications investments; detected industry does not appear to meet this program scope.",
+      "triggers": [
+        "Detected industry: Healthcare"
+      ],
+      "assumptions": [
+        "Qualified investment property placed in service",
+        "Tier/location thresholds satisfied"
+      ],
+      "confidence": 0.9
+    },
+    {
+      "code": "MERP",
+      "name": "Self-Insured Medical Reimbursement Plan (MERP)",
+      "status": "possible",
+      "rationale": "Most mid-size employers can evaluate MERP/HRA-style structures for payroll tax and benefit efficiency.",
+      "triggers": [
+        "Employer-sponsored health benefit spend",
+        "Workforce size > 10 employees (to validate)"
+      ],
+      "assumptions": [
+        "Plan design meets ERISA/IRS requirements",
+        "Third-party administration is feasible"
+      ],
+      "confidence": 0.52
+    }
+  ],
+  "expansion_signals": [
+    "headquarters",
+    "new headquarters",
+    "pattern:new\\s+(facility|plant|warehouse|location|headquarters|hq)"
+  ],
+  "property_signals": [],
+  "narrative": {
+    "sector_title": "Healthcare",
+    "sector_confidence": "96%",
+    "company_description": "Verida | Connecting Life to Health Contact Us Members Transportation Providers Facilities Corporate About Verida Company Overview Leadership Team Our Services Careers VERIDA News Select Page Welcome to the future of transportation management",
+    "sector_summary": "Detected primary industry as Healthcare based on website language and keyword density.",
+    "ga_jtc_intro": "The GA JTC offers a dollar-for-dollar reduction of state income tax liability when creating new jobs in certain areas. Counties are designated Tier 1 through Tier 4, with Military Zones, Less Developed Census Tracts (LDCT), and Opportunity Zones often supporting lower thresholds and larger benefits.",
+    "ga_jtc_note": "Verida Georgia locations with corresponding tier designations and estimated credit benefits are shown below. Final thresholds may be NAICS dependent and should be validated.",
+    "retraining_intro": "The GA Retraining Tax Credit can provide up to 50% of eligible retraining costs, including wages of trainees, up to $1,250 per employee per year.",
+    "retraining_context": "Below are industry-specific software and equipment categories with applicable programs. If implemented and employees were retrained to use them, these categories may support GA RTC claims.",
+    "rd_intro": "Federal and Georgia R&D credits can provide tax relief on qualified technical activities, typically as a percentage of qualified research spend including eligible wages.",
+    "rd_examples_intro": "Examples of how Verida may qualify include:",
+    "rd_focus_examples": [
+      "Care delivery workflow design and iterative validation for improved patient outcomes.",
+      "Development and testing of analytics or triage models for operational decision support.",
+      "Integration and optimization of clinical data systems under technical constraints."
+    ],
+    "costseg_intro": "Verida may be able to reduce taxes through cost segregation by accelerating depreciation on newly constructed, expanded, or purchased facilities.",
+    "costseg_detail": "For operations-heavy facilities, portions such as site improvements, electrical systems, specialized power, fabrication areas, and certain interior improvements may qualify for shorter depreciation lives.",
+    "costseg_bonus": "A substantial portion of commercial building basis (net of land) may be accelerated in year one, subject to current bonus depreciation rules and project facts.",
+    "retraining_rows": [
+      {
+        "type": "Software",
+        "category": "Practice Management Software",
+        "applicable_programs": [
+          "athenaOne",
+          "eClinicalWorks",
+          "AdvancedMD",
+          "NextGen Office"
+        ]
+      },
+      {
+        "type": "Software",
+        "category": "CRM / Patient Engagement",
+        "applicable_programs": [
+          "Salesforce Health Cloud",
+          "HubSpot",
+          "Luma Health",
+          "Solutionreach"
+        ]
+      },
+      {
+        "type": "Software",
+        "category": "Document / Records Management",
+        "applicable_programs": [
+          "Epic",
+          "Cerner",
+          "OnBase",
+          "M-Files"
+        ]
+      },
+      {
+        "type": "Equipment",
+        "category": "Clinical & Diagnostic Equipment",
+        "applicable_programs": [
+          "Patient monitoring systems",
+          "Portable diagnostic devices",
+          "Imaging peripherals",
+          "Lab analyzers"
+        ]
+      },
+      {
+        "type": "Equipment",
+        "category": "Mobile Care Technology",
+        "applicable_programs": [
+          "Tablets for point-of-care",
+          "Telehealth carts",
+          "Vital-sign capture devices",
+          "Secure mobile workstations"
+        ]
+      }
+    ],
+    "investment_status": "unlikely",
+    "investment_rationale": "Georgia Investment Tax Credit is generally targeted to qualifying manufacturing/telecommunications investments; detected industry does not appear to meet this program scope."
+  },
+  "source_log": [
+    {
+      "source": "https://www.verida.com",
+      "type": "website_page",
+      "detail": "Parsed homepage"
+    },
+    {
+      "source": "https://www.verida.com/facilities/",
+      "type": "website_page",
+      "detail": "Parsed related page"
+    },
+    {
+      "source": "https://www.verida.com/about-verida/",
+      "type": "website_page",
+      "detail": "Parsed related page"
+    },
+    {
+      "source": "https://www.verida.com/verida-news/",
+      "type": "website_page",
+      "detail": "Parsed related page"
+    },
+    {
+      "source": "https://www.verida.com/news",
+      "type": "error",
+      "detail": "Page fetch failed: 404 Client Error: Not Found for url: https://verida.com/news"
+    },
+    {
+      "source": "https://www.verida.com/newsroom",
+      "type": "error",
+      "detail": "Page fetch failed: 404 Client Error: Not Found for url: https://verida.com/newsroom"
+    },
+    {
+      "source": "https://www.verida.com/press",
+      "type": "error",
+      "detail": "Page fetch failed: 404 Client Error: Not Found for url: https://verida.com/press"
+    },
+    {
+      "source": "https://www.verida.com/media",
+      "type": "error",
+      "detail": "Page fetch failed: 404 Client Error: Not Found for url: https://verida.com/media"
+    },
+    {
+      "source": "https://www.verida.com/about",
+      "type": "website_page",
+      "detail": "Parsed related page"
+    },
+    {
+      "source": "https://www.verida.com/locations",
+      "type": "error",
+      "detail": "Page fetch failed: 404 Client Error: Not Found for url: https://verida.com/locations"
+    },
+    {
+      "source": "https://www.verida.com",
+      "type": "extract",
+      "detail": "Crawled 10 page(s), checked 14 candidate links, detected 0 address candidate(s)"
+    }
+  ]
+}

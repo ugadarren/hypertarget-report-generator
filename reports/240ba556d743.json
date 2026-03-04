@@ -1,0 +1,464 @@
+{
+  "id": "240ba556d743",
+  "created_at": "2026-03-04T01:35:49.628442Z",
+  "company_name": "Sailfish Boats",
+  "website": "https://www.sailfishboats.com",
+  "sector_profile": {
+    "sector_key": "manufacturing",
+    "sector": "Manufacturing",
+    "company_description": "Sailfish Boats manufactures a diverse range of high-quality, family-friendly fishing boats designed for offshore and inshore use. Their product line includes various sizes and models featuring advanced marine technologies and customizable options.",
+    "sector_summary": "The manufacturing sector for recreational and fishing boats focuses on the design, fabrication, and assembly of watercraft utilizing specialized marine engineering, composite materials, and propulsion technologies to meet consumer and regulatory standards.",
+    "rd_focus_examples": [
+      "Design and optimization of new fishing boat hull shapes for enhanced stability",
+      "Development of advanced fiberglass composite formulations for durability and weight reduction",
+      "Prototyping and testing of center console boat models with innovative features",
+      "Automation of composite layup and curing processes to improve efficiency",
+      "Customizing CAD software tools for marine-specific design challenges",
+      "Implementing robotic welding for precision assembly of boat frames",
+      "Conducting R&D on propulsion systems to meet stricter environmental regulations",
+      "Testing new fuel delivery systems for performance and compliance",
+      "Enhancing quality control systems using 3D scanning and inspection",
+      "Software integration projects for supply chain and production data management"
+    ],
+    "rd_feasibility": "likely",
+    "rd_confidence": 0.9,
+    "rd_rationale": "Given the company's focus on innovative boat design, material advances, and the integration of new manufacturing technologies, activities qualifying for R&D credits are highly likely, especially in prototyping and testing new boat models and components.",
+    "rd_rows": [
+      {
+        "category": "Product Development",
+        "activities": [
+          "Designing new boat hull configurations to improve performance and safety",
+          "Developing innovative composite material blends for lighter, stronger boat structures",
+          "Prototyping and testing new center console and dual console boat models",
+          "Integrating advanced propulsion systems and fuel efficiency improvements"
+        ]
+      },
+      {
+        "category": "Process Improvement",
+        "activities": [
+          "Optimizing composite layup and molding techniques to reduce production time and defects",
+          "Implementing advanced manufacturing automation and CNC machining processes",
+          "Enhancing quality assurance protocols via precision inspection technology"
+        ]
+      },
+      {
+        "category": "Software Development and Implementation",
+        "activities": [
+          "Developing or customizing CAD and marine simulation software for better design accuracy",
+          "Integrating PLM and ERP systems to streamline supply chain and production tracking",
+          "Improving product lifecycle data management and analytics capabilities"
+        ]
+      },
+      {
+        "category": "Testing and Certification",
+        "activities": [
+          "Conducting yacht certification testing for new boat models",
+          "Performing environmental and safety compliance testing",
+          "Evaluating fuel system performance and emissions standards compliance"
+        ]
+      }
+    ],
+    "investment_credit_applicable": true,
+    "retraining_rows": [
+      {
+        "type": "Software",
+        "category": "Design and Engineering Software",
+        "applicable_programs": [
+          "Autodesk AutoCAD",
+          "SolidWorks",
+          "Rhinoceros 3D",
+          "VERICUT",
+          "Siemens NX"
+        ]
+      },
+      {
+        "type": "Software",
+        "category": "Manufacturing and Supply Chain Management",
+        "applicable_programs": [
+          "SAP ERP",
+          "Oracle SCM Cloud",
+          "Microsoft Dynamics 365",
+          "Fishbowl Inventory",
+          "Infor CloudSuite Industrial"
+        ]
+      },
+      {
+        "type": "Equipment",
+        "category": "Composite and Fiberglass Manufacturing",
+        "applicable_programs": [
+          "Fiberglass Spray Guns",
+          "Vacuum Infusion Systems",
+          "Composite Autoclaves",
+          "Resin Transfer Molding (RTM) Equipment",
+          "Hand Layup Tools"
+        ]
+      },
+      {
+        "type": "Equipment",
+        "category": "Precision Machining and Assembly",
+        "applicable_programs": [
+          "CNC Routers",
+          "Robotic Welding Systems",
+          "Laser Cutting Machines",
+          "Hydraulic Presses",
+          "3D Printers for Rapid Prototyping"
+        ]
+      }
+    ],
+    "software_systems": [
+      "CAD (Computer-Aided Design) software",
+      "CAM (Computer-Aided Manufacturing) software",
+      "PLM (Product Lifecycle Management) systems",
+      "ERP (Enterprise Resource Planning) software",
+      "Marine simulation software",
+      "Supply chain management software",
+      "Inventory control systems",
+      "Quality management software",
+      "3D modeling and rendering tools",
+      "Manufacturing execution systems (MES)",
+      "Project management software",
+      "Customer relationship management (CRM) software",
+      "Boat design and engineering software",
+      "Maintenance management software"
+    ],
+    "equipment": [
+      "CNC machining centers",
+      "Composite layup equipment",
+      "Fiberglass molding machines",
+      "Laser cutting systems",
+      "Robotic welding equipment",
+      "3D printers for prototyping",
+      "Hydraulic assembly tools",
+      "Boat hull forming molds",
+      "Paint booths and curing ovens",
+      "Engine testing rigs",
+      "Propulsion system assembly tools",
+      "Quality inspection and measurement devices"
+    ],
+    "evidence": [
+      "Manual sector input: manufacturing",
+      "Resolved sector key: manufacturing",
+      "LLM detection reason: Sailfish Boats designs and produces a range of high-quality fishing boats, which classifies the company primarily in the manufacturing sector as it is involved in the production of physical goods.",
+      "LLM-enriched using model gpt-4.1-mini",
+      "Website: https://www.sailfishboats.com",
+      "Selected sector: Manufacturing"
+    ]
+  },
+  "locations": [
+    {
+      "address": "2501 Industrial Park Dr, Cairo, GA 39828",
+      "county": "Grady",
+      "state": "Georgia",
+      "latitude": 30.8694784,
+      "longitude": -84.1800588,
+      "ga_tier": "1",
+      "military_zone": null,
+      "ldct": null,
+      "opportunity_zone": null,
+      "tier1_lower_40": null,
+      "special_designation": "None",
+      "job_creation_threshold": "+2",
+      "per_job_credit_amount": "$3,500/yr for 5 years",
+      "investment_tax_credit_pct": "8%",
+      "zone_details": {
+        "tier": {
+          "FID": 139,
+          "STATEFP": "13",
+          "COUNTYFP": "131",
+          "COUNTYNS": "00351261",
+          "GEOID": "13131",
+          "GEOIDFQ": "0500000US13131",
+          "NAME": "Grady",
+          "NAMELSAD": "Grady County",
+          "LSAD": "06",
+          "CLASSFP": "H1",
+          "MTFCC": "G4020",
+          "CSAFP": " ",
+          "CBSAFP": "45620",
+          "METDIVFP": " ",
+          "FUNCSTAT": "A",
+          "ALAND": 1177052070,
+          "AWATER": 15026015,
+          "INTPTLAT": "+30.8759004",
+          "INTPTLON": "-084.2449647",
+          "Shape_Leng": 1.39899482753,
+          "County": "Grady County",
+          "County_1": "Grady",
+          "Rank25": 65,
+          "Tier25": "Tier 1",
+          "Rank24": 75,
+          "Tier24": "Tier 2",
+          "Movement": "Low",
+          "ObjectID_1": 53,
+          "Shape_Le_1": 1.39899482753,
+          "Shape__Area": 1623386536.5761719,
+          "Shape__Length": 169878.88148028348
+        },
+        "_diagnostics": [
+          {
+            "scope": "geocode",
+            "status": "ok",
+            "detail": "Address geocoded successfully with nominatim."
+          },
+          {
+            "scope": "military_zone",
+            "status": "no_match",
+            "detail": "No intersecting feature from https://services2.arcgis.com/Gqyymy5JISeLzyNM/arcgis/rest/services/MZ_Eligible_Tracts_25/FeatureServer/0"
+          },
+          {
+            "scope": "ldct",
+            "status": "no_match",
+            "detail": "No intersecting feature from https://services2.arcgis.com/Gqyymy5JISeLzyNM/arcgis/rest/services/Job_Tax_Credit_Incentives_2025_WFL1/FeatureServer/3"
+          },
+          {
+            "scope": "tier",
+            "status": "matched",
+            "detail": "Matched polygon from https://services2.arcgis.com/Gqyymy5JISeLzyNM/arcgis/rest/services/Job_Tax_Credit_Incentives_2025_WFL1/FeatureServer/2"
+          },
+          {
+            "scope": "opportunity_zone",
+            "status": "no_match",
+            "detail": "No intersecting feature from https://services2.arcgis.com/Gqyymy5JISeLzyNM/arcgis/rest/services/GA_OZDec2017/FeatureServer/0"
+          }
+        ]
+      },
+      "confidence": 0.92,
+      "evidence": [
+        "OpenStreetMap Nominatim geocoding",
+        "ArcGIS DCA map spatial intersection"
+      ]
+    }
+  ],
+  "credits": [
+    {
+      "code": "GA_RETRAINING",
+      "name": "Georgia Retraining Tax Credit",
+      "status": "likely",
+      "rationale": "Identified 2 software and 2 equipment retraining categories relevant to operations.",
+      "triggers": [
+        "CAD (Computer-Aided Design) software",
+        "CAM (Computer-Aided Manufacturing) software",
+        "PLM (Product Lifecycle Management) systems",
+        "ERP (Enterprise Resource Planning) software"
+      ],
+      "assumptions": [
+        "Company has Georgia payroll tax liability",
+        "Training expenses are documented"
+      ],
+      "confidence": 0.8
+    },
+    {
+      "code": "FEDERAL_RD",
+      "name": "Federal R&D Tax Credit",
+      "status": "likely",
+      "rationale": "Given the company's focus on innovative boat design, material advances, and the integration of new manufacturing technologies, activities qualifying for R&D credits are highly likely, especially in prototyping and testing new boat models and components.",
+      "triggers": [
+        "engineering",
+        "design",
+        "development",
+        "innovation"
+      ],
+      "assumptions": [
+        "Technical uncertainty and experimentation occurred",
+        "Qualified wage/supply data available"
+      ],
+      "confidence": 0.9
+    },
+    {
+      "code": "GA_RD",
+      "name": "Georgia R&D Tax Credit",
+      "status": "likely",
+      "rationale": "Georgia credit follows similar qualified research principles with state-specific base calculations.",
+      "triggers": [
+        "engineering",
+        "design",
+        "development",
+        "innovation"
+      ],
+      "assumptions": [
+        "Georgia nexus and qualified expenses",
+        "Prior year spend available for base-period computation"
+      ],
+      "confidence": 0.86
+    },
+    {
+      "code": "GA_INVESTMENT",
+      "name": "Georgia Investment Tax Credit",
+      "status": "likely",
+      "rationale": "Expansion/capital signals combined with county tier may support Georgia investment incentives.",
+      "triggers": [
+        "construction"
+      ],
+      "assumptions": [
+        "Qualified investment property placed in service",
+        "Tier/location thresholds satisfied"
+      ],
+      "confidence": 0.71
+    },
+    {
+      "code": "MERP",
+      "name": "Self-Insured Medical Reimbursement Plan (MERP)",
+      "status": "possible",
+      "rationale": "Most mid-size employers can evaluate MERP/HRA-style structures for payroll tax and benefit efficiency.",
+      "triggers": [
+        "Employer-sponsored health benefit spend",
+        "Workforce size > 10 employees (to validate)"
+      ],
+      "assumptions": [
+        "Plan design meets ERISA/IRS requirements",
+        "Third-party administration is feasible"
+      ],
+      "confidence": 0.52
+    }
+  ],
+  "expansion_signals": [
+    "construction"
+  ],
+  "property_signals": [],
+  "narrative": {
+    "sector_title": "Manufacturing",
+    "company_description": "Sailfish Boats manufactures a diverse range of high-quality, family-friendly fishing boats designed for offshore and inshore use. Their product line includes various sizes and models featuring advanced marine technologies and customizable options.",
+    "sector_summary": "The manufacturing sector for recreational and fishing boats focuses on the design, fabrication, and assembly of watercraft utilizing specialized marine engineering, composite materials, and propulsion technologies to meet consumer and regulatory standards.",
+    "ga_jtc_intro": "The GA JTC offers a dollar-for-dollar reduction of state income tax liability when creating new jobs in certain areas. Counties are designated Tier 1 through Tier 4, with Military Zones, Less Developed Census Tracts (LDCT), and Opportunity Zones often supporting lower thresholds and larger benefits.",
+    "ga_jtc_note": "Sailfish Boats Georgia locations with corresponding tier designations and estimated credit benefits are shown below based on county tier and special designations.",
+    "retraining_intro": "The GA Retraining Tax Credit can provide up to 50% of eligible retraining costs, including wages of trainees, up to $1,250 per employee per year.",
+    "retraining_context": "Below are industry-specific software and equipment categories with applicable programs. If implemented and employees were retrained to use them, these categories may support GA RTC claims.",
+    "retraining_feasibility": "Likely",
+    "retraining_confidence_pct": 80,
+    "retraining_rationale": "Identified 2 software and 2 equipment retraining categories relevant to operations.",
+    "rd_intro": "Federal and Georgia R&D credits can provide tax relief on qualified technical activities, typically as a percentage of qualified research spend including eligible wages.",
+    "rd_examples_intro": "R&D feasibility and potential qualifying activities for Sailfish Boats:",
+    "rd_feasibility": "Likely",
+    "rd_confidence_pct": 90,
+    "rd_rationale": "Given the company's focus on innovative boat design, material advances, and the integration of new manufacturing technologies, activities qualifying for R&D credits are highly likely, especially in prototyping and testing new boat models and components.",
+    "rd_rows": [
+      {
+        "category": "Product Development",
+        "activities": [
+          "Designing new boat hull configurations to improve performance and safety",
+          "Developing innovative composite material blends for lighter, stronger boat structures",
+          "Prototyping and testing new center console and dual console boat models",
+          "Integrating advanced propulsion systems and fuel efficiency improvements"
+        ]
+      },
+      {
+        "category": "Process Improvement",
+        "activities": [
+          "Optimizing composite layup and molding techniques to reduce production time and defects",
+          "Implementing advanced manufacturing automation and CNC machining processes",
+          "Enhancing quality assurance protocols via precision inspection technology"
+        ]
+      },
+      {
+        "category": "Software Development and Implementation",
+        "activities": [
+          "Developing or customizing CAD and marine simulation software for better design accuracy",
+          "Integrating PLM and ERP systems to streamline supply chain and production tracking",
+          "Improving product lifecycle data management and analytics capabilities"
+        ]
+      },
+      {
+        "category": "Testing and Certification",
+        "activities": [
+          "Conducting yacht certification testing for new boat models",
+          "Performing environmental and safety compliance testing",
+          "Evaluating fuel system performance and emissions standards compliance"
+        ]
+      }
+    ],
+    "rd_focus_examples": [
+      "Design and optimization of new fishing boat hull shapes for enhanced stability",
+      "Development of advanced fiberglass composite formulations for durability and weight reduction",
+      "Prototyping and testing of center console boat models with innovative features",
+      "Automation of composite layup and curing processes to improve efficiency",
+      "Customizing CAD software tools for marine-specific design challenges",
+      "Implementing robotic welding for precision assembly of boat frames",
+      "Conducting R&D on propulsion systems to meet stricter environmental regulations",
+      "Testing new fuel delivery systems for performance and compliance",
+      "Enhancing quality control systems using 3D scanning and inspection",
+      "Software integration projects for supply chain and production data management"
+    ],
+    "retraining_rows": [
+      {
+        "type": "Software",
+        "category": "Design and Engineering Software",
+        "applicable_programs": [
+          "Autodesk AutoCAD",
+          "SolidWorks",
+          "Rhinoceros 3D",
+          "VERICUT",
+          "Siemens NX"
+        ]
+      },
+      {
+        "type": "Software",
+        "category": "Manufacturing and Supply Chain Management",
+        "applicable_programs": [
+          "SAP ERP",
+          "Oracle SCM Cloud",
+          "Microsoft Dynamics 365",
+          "Fishbowl Inventory",
+          "Infor CloudSuite Industrial"
+        ]
+      },
+      {
+        "type": "Equipment",
+        "category": "Composite and Fiberglass Manufacturing",
+        "applicable_programs": [
+          "Fiberglass Spray Guns",
+          "Vacuum Infusion Systems",
+          "Composite Autoclaves",
+          "Resin Transfer Molding (RTM) Equipment",
+          "Hand Layup Tools"
+        ]
+      },
+      {
+        "type": "Equipment",
+        "category": "Precision Machining and Assembly",
+        "applicable_programs": [
+          "CNC Routers",
+          "Robotic Welding Systems",
+          "Laser Cutting Machines",
+          "Hydraulic Presses",
+          "3D Printers for Rapid Prototyping"
+        ]
+      }
+    ],
+    "investment_status": "likely",
+    "investment_rationale": "Expansion/capital signals combined with county tier may support Georgia investment incentives.",
+    "investment_confidence_pct": 71,
+    "investment_signals_summary": "We identified potential investment indicators for Sailfish Boats, including: construction. These signals may support further ITC evaluation, subject to project and placement-in-service details."
+  },
+  "source_log": [
+    {
+      "source": "https://www.sailfishboats.com",
+      "type": "website_page",
+      "detail": "Parsed homepage"
+    },
+    {
+      "source": "https://www.sailfishboats.com/news-and-blogs",
+      "type": "website_page",
+      "detail": "Parsed related page"
+    },
+    {
+      "source": "https://www.sailfishboats.com/model/236-dual-console-family-fishing-boat",
+      "type": "website_page",
+      "detail": "Parsed related page"
+    },
+    {
+      "source": "https://www.sailfishboats.com",
+      "type": "extract",
+      "detail": "Crawled 3 page(s), checked 2 candidate links, detected 0 address candidate(s)"
+    },
+    {
+      "source": "openai",
+      "type": "llm",
+      "detail": "Detected sector Manufacturing (manufacturing). Sailfish Boats designs and produces a range of high-quality fishing boats, which classifies the company primarily in the manufacturing sector as it is involved in the production of physical goods."
+    },
+    {
+      "source": "openai",
+      "type": "llm",
+      "detail": "Applied GPT enrichment (gpt-4.1-mini) for sector narrative, retraining, and R&D feasibility scoring."
+    }
+  ]
+}

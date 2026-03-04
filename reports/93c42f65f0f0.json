@@ -1,0 +1,377 @@
+{
+  "id": "93c42f65f0f0",
+  "created_at": "2026-03-04T00:50:34.949830Z",
+  "company_name": "TQ Logistics",
+  "website": "https://www.tqlogistics.com",
+  "sector_profile": {
+    "sector_key": "logistics",
+    "sector": "Logistics and Distribution",
+    "company_description": "TQ Logistics is being evaluated under the manually selected sector: Logistics and Distribution.",
+    "sector_summary": "Sector logic in this report is based on your manual industry input, not automatic website classification.",
+    "rd_focus_examples": [
+      "Warehouse flow redesign and testing for pick/pack optimization.",
+      "Route and dispatch algorithm testing to improve delivery performance.",
+      "Automation pilots for sortation and inventory accuracy improvements."
+    ],
+    "investment_credit_applicable": false,
+    "retraining_rows": [
+      {
+        "type": "Software",
+        "category": "Industry Management Software",
+        "applicable_programs": [
+          "Manhattan WMS",
+          "Oracle WMS",
+          "SAP EWM",
+          "Samsara"
+        ]
+      },
+      {
+        "type": "Software",
+        "category": "Operations / ERP Software",
+        "applicable_programs": [
+          "Motive",
+          "TMS platforms"
+        ]
+      },
+      {
+        "type": "Equipment",
+        "category": "Operational Equipment",
+        "applicable_programs": [
+          "Forklifts",
+          "Sortation systems",
+          "Racking",
+          "RF scanners"
+        ]
+      },
+      {
+        "type": "Equipment",
+        "category": "Testing / Diagnostic Equipment",
+        "applicable_programs": [
+          "Dock equipment",
+          "AMRs/automation"
+        ]
+      }
+    ],
+    "software_systems": [
+      "Manhattan WMS",
+      "Oracle WMS",
+      "SAP EWM",
+      "Samsara",
+      "Motive",
+      "TMS platforms"
+    ],
+    "equipment": [
+      "Forklifts",
+      "Sortation systems",
+      "Racking",
+      "RF scanners",
+      "Dock equipment",
+      "AMRs/automation"
+    ],
+    "evidence": [
+      "Manual sector input: Logistics and Distribution",
+      "Resolved sector key: logistics"
+    ]
+  },
+  "locations": [
+    {
+      "address": "3698 Largent Way # 104, Marietta, GA 30064",
+      "county": "067",
+      "state": "Georgia",
+      "latitude": 33.955176809782,
+      "longitude": -84.65954888829,
+      "ga_tier": "Tier 4",
+      "military_zone": null,
+      "ldct": null,
+      "opportunity_zone": null,
+      "special_designation": "None",
+      "job_creation_threshold": "NAICS Dependent",
+      "per_job_credit_amount": "NAICS Dependent",
+      "investment_tax_credit_pct": "1%",
+      "zone_details": {
+        "tier": {
+          "FID": 129,
+          "STATEFP": "13",
+          "COUNTYFP": "067",
+          "COUNTYNS": "01686112",
+          "GEOID": "13067",
+          "GEOIDFQ": "0500000US13067",
+          "NAME": "Cobb",
+          "NAMELSAD": "Cobb County",
+          "LSAD": "06",
+          "CLASSFP": "H1",
+          "MTFCC": "G4020",
+          "CSAFP": "122",
+          "CBSAFP": "12060",
+          "METDIVFP": "31924",
+          "FUNCSTAT": "A",
+          "ALAND": 879793162,
+          "AWATER": 12036674,
+          "INTPTLAT": "+33.9399263",
+          "INTPTLON": "-084.5741102",
+          "Shape_Leng": 1.32141634564,
+          "County": "Cobb County",
+          "County_1": "Cobb",
+          "Rank25": 150,
+          "Tier25": "Tier 4",
+          "Rank24": 150,
+          "Tier24": "Tier 4",
+          "Movement": " ",
+          "ObjectID_1": 144,
+          "Shape_Le_1": 1.32141634564,
+          "Shape__Area": 1299095067.9609375,
+          "Shape__Length": 161063.56312885287
+        },
+        "_diagnostics": [
+          {
+            "scope": "geocode",
+            "status": "ok",
+            "detail": "Address geocoded successfully with arcgis_world_geocoder."
+          },
+          {
+            "scope": "military_zone",
+            "status": "no_match",
+            "detail": "No intersecting feature from https://services2.arcgis.com/Gqyymy5JISeLzyNM/arcgis/rest/services/MZ_Eligible_Tracts_25/FeatureServer/0"
+          },
+          {
+            "scope": "ldct",
+            "status": "no_match",
+            "detail": "No intersecting feature from https://services2.arcgis.com/Gqyymy5JISeLzyNM/arcgis/rest/services/Job_Tax_Credit_Incentives_2025_WFL1/FeatureServer/3"
+          },
+          {
+            "scope": "tier",
+            "status": "matched",
+            "detail": "Matched polygon from https://services2.arcgis.com/Gqyymy5JISeLzyNM/arcgis/rest/services/Job_Tax_Credit_Incentives_2025_WFL1/FeatureServer/2"
+          },
+          {
+            "scope": "opportunity_zone",
+            "status": "no_match",
+            "detail": "No intersecting feature from https://services2.arcgis.com/Gqyymy5JISeLzyNM/arcgis/rest/services/GA_OZDec2017/FeatureServer/0"
+          }
+        ]
+      },
+      "confidence": 0.92,
+      "evidence": [
+        "arcgis_world_geocoder geocoding",
+        "ArcGIS DCA map spatial intersection"
+      ]
+    }
+  ],
+  "credits": [
+    {
+      "code": "GA_RETRAINING",
+      "name": "Georgia Retraining Tax Credit",
+      "status": "likely",
+      "rationale": "Sector software stack indicates periodic upskilling for systems adoption and process changes.",
+      "triggers": [
+        "Manhattan WMS",
+        "Oracle WMS",
+        "SAP EWM",
+        "Samsara"
+      ],
+      "assumptions": [
+        "Company has Georgia payroll tax liability",
+        "Training expenses are documented"
+      ],
+      "confidence": 0.72
+    },
+    {
+      "code": "FEDERAL_RD",
+      "name": "Federal R&D Tax Credit",
+      "status": "possible",
+      "rationale": "Website/notes include technical improvement and development signals.",
+      "triggers": [
+        "design"
+      ],
+      "assumptions": [
+        "Technical uncertainty and experimentation occurred",
+        "Qualified wage/supply data available"
+      ],
+      "confidence": 0.68
+    },
+    {
+      "code": "GA_RD",
+      "name": "Georgia R&D Tax Credit",
+      "status": "possible",
+      "rationale": "Georgia credit follows similar qualified research principles with state-specific base calculations.",
+      "triggers": [
+        "design"
+      ],
+      "assumptions": [
+        "Georgia nexus and qualified expenses",
+        "Prior year spend available for base-period computation"
+      ],
+      "confidence": 0.64
+    },
+    {
+      "code": "COST_SEGREGATION",
+      "name": "Cost Segregation Study",
+      "status": "likely",
+      "rationale": "Property acquisition/improvement signals suggest opportunity to accelerate depreciation.",
+      "triggers": [
+        "warehouse"
+      ],
+      "assumptions": [
+        "Commercial property acquired, built, or improved",
+        "Depreciable basis is material"
+      ],
+      "confidence": 0.74
+    },
+    {
+      "code": "GA_INVESTMENT",
+      "name": "Georgia Investment Tax Credit",
+      "status": "unlikely",
+      "rationale": "Georgia Investment Tax Credit is generally targeted to qualifying manufacturing/telecommunications investments; detected industry does not appear to meet this program scope.",
+      "triggers": [
+        "Detected industry: Logistics and Distribution"
+      ],
+      "assumptions": [
+        "Qualified investment property placed in service",
+        "Tier/location thresholds satisfied"
+      ],
+      "confidence": 0.9
+    },
+    {
+      "code": "MERP",
+      "name": "Self-Insured Medical Reimbursement Plan (MERP)",
+      "status": "possible",
+      "rationale": "Most mid-size employers can evaluate MERP/HRA-style structures for payroll tax and benefit efficiency.",
+      "triggers": [
+        "Employer-sponsored health benefit spend",
+        "Workforce size > 10 employees (to validate)"
+      ],
+      "assumptions": [
+        "Plan design meets ERISA/IRS requirements",
+        "Third-party administration is feasible"
+      ],
+      "confidence": 0.52
+    }
+  ],
+  "expansion_signals": [
+    "footprint"
+  ],
+  "property_signals": [
+    "warehouse"
+  ],
+  "narrative": {
+    "sector_title": "Logistics and Distribution",
+    "company_description": "TQ Logistics is being evaluated under the manually selected sector: Logistics and Distribution.",
+    "sector_summary": "Sector logic in this report is based on your manual industry input, not automatic website classification.",
+    "ga_jtc_intro": "The GA JTC offers a dollar-for-dollar reduction of state income tax liability when creating new jobs in certain areas. Counties are designated Tier 1 through Tier 4, with Military Zones, Less Developed Census Tracts (LDCT), and Opportunity Zones often supporting lower thresholds and larger benefits.",
+    "ga_jtc_note": "TQ Logistics Georgia locations with corresponding tier designations and estimated credit benefits are shown below. Final thresholds may be NAICS dependent and should be validated.",
+    "retraining_intro": "The GA Retraining Tax Credit can provide up to 50% of eligible retraining costs, including wages of trainees, up to $1,250 per employee per year.",
+    "retraining_context": "Below are industry-specific software and equipment categories with applicable programs. If implemented and employees were retrained to use them, these categories may support GA RTC claims.",
+    "rd_intro": "Federal and Georgia R&D credits can provide tax relief on qualified technical activities, typically as a percentage of qualified research spend including eligible wages.",
+    "rd_examples_intro": "Examples of how TQ Logistics may qualify include:",
+    "rd_focus_examples": [
+      "Warehouse flow redesign and testing for pick/pack optimization.",
+      "Route and dispatch algorithm testing to improve delivery performance.",
+      "Automation pilots for sortation and inventory accuracy improvements."
+    ],
+    "costseg_intro": "TQ Logistics may be able to reduce taxes through cost segregation by accelerating depreciation on newly constructed, expanded, or purchased facilities.",
+    "costseg_detail": "For operations-heavy facilities, portions such as site improvements, electrical systems, specialized power, fabrication areas, and certain interior improvements may qualify for shorter depreciation lives.",
+    "costseg_bonus": "A substantial portion of commercial building basis (net of land) may be accelerated in year one, subject to current bonus depreciation rules and project facts.",
+    "retraining_rows": [
+      {
+        "type": "Software",
+        "category": "Industry Management Software",
+        "applicable_programs": [
+          "Manhattan WMS",
+          "Oracle WMS",
+          "SAP EWM",
+          "Samsara"
+        ]
+      },
+      {
+        "type": "Software",
+        "category": "Operations / ERP Software",
+        "applicable_programs": [
+          "Motive",
+          "TMS platforms"
+        ]
+      },
+      {
+        "type": "Equipment",
+        "category": "Operational Equipment",
+        "applicable_programs": [
+          "Forklifts",
+          "Sortation systems",
+          "Racking",
+          "RF scanners"
+        ]
+      },
+      {
+        "type": "Equipment",
+        "category": "Testing / Diagnostic Equipment",
+        "applicable_programs": [
+          "Dock equipment",
+          "AMRs/automation"
+        ]
+      }
+    ],
+    "investment_status": "unlikely",
+    "investment_rationale": "Georgia Investment Tax Credit is generally targeted to qualifying manufacturing/telecommunications investments; detected industry does not appear to meet this program scope."
+  },
+  "source_log": [
+    {
+      "source": "https://www.tqlogistics.com",
+      "type": "website_page",
+      "detail": "Parsed homepage"
+    },
+    {
+      "source": "https://www.tqlogistics.com/news",
+      "type": "website_page",
+      "detail": "Parsed related page"
+    },
+    {
+      "source": "https://www.tqlogistics.com/newsroom",
+      "type": "error",
+      "detail": "Page fetch failed: 404 Client Error: Not Found for url: https://tqlogistics.com/newsroom"
+    },
+    {
+      "source": "https://www.tqlogistics.com/press",
+      "type": "error",
+      "detail": "Page fetch failed: 404 Client Error: Not Found for url: https://tqlogistics.com/press"
+    },
+    {
+      "source": "https://www.tqlogistics.com/media",
+      "type": "error",
+      "detail": "Page fetch failed: 404 Client Error: Not Found for url: https://tqlogistics.com/media"
+    },
+    {
+      "source": "https://www.tqlogistics.com/about",
+      "type": "website_page",
+      "detail": "Parsed related page"
+    },
+    {
+      "source": "https://www.tqlogistics.com/locations",
+      "type": "website_page",
+      "detail": "Parsed related page"
+    },
+    {
+      "source": "https://www.tqlogistics.com/contact",
+      "type": "website_page",
+      "detail": "Parsed related page"
+    },
+    {
+      "source": "https://www.tqlogistics.com/contact-us",
+      "type": "website_page",
+      "detail": "Parsed related page"
+    },
+    {
+      "source": "https://www.tqlogistics.com/our-locations",
+      "type": "error",
+      "detail": "Page fetch failed: 404 Client Error: Not Found for url: https://tqlogistics.com/our-locations"
+    },
+    {
+      "source": "https://www.tqlogistics.com",
+      "type": "extract",
+      "detail": "Crawled 10 page(s), checked 11 candidate links, detected 0 address candidate(s)"
+    },
+    {
+      "source": "openai",
+      "type": "llm_error",
+      "detail": "LLM enrichment failed: Client error '429 Too Many Requests' for url 'https://api.openai.com/v1/responses'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/429"
+    }
+  ]
+}
