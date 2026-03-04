@@ -14,6 +14,13 @@
       </header>
 
       <section class="doc-section">
+        <h2>Company Sector and Industry Analysis</h2>
+        <p><strong>Detected Sector:</strong> {{ report.narrative.get('sector_title', report.sector_profile.sector) }}</p>
+        <p><strong>Company Description:</strong> {{ report.narrative.get('company_description', '') }}</p>
+        <p>{{ report.narrative.get('sector_summary', '') }}</p>
+      </section>
+
+      <section class="doc-section">
         <h2>GA Job Tax Credit</h2>
         <p>{{ report.narrative.get('ga_jtc_intro', '') }}</p>
         <p>{{ report.narrative.get('ga_jtc_note', '') }}</p>
@@ -30,14 +37,19 @@
             </tr>
           </thead>
           <tbody>
+            {% if not report.locations %}
+            <tr>
+              <td colspan="6">No addresses were entered. Address processing is manual-only.</td>
+            </tr>
+            {% endif %}
             {% for loc in report.locations %}
             <tr>
               <td>{{ loc.address }}</td>
               <td>{{ loc.county or '-' }}</td>
               <td>{% if loc.ga_tier %}Tier {{ loc.ga_tier }}{% else %}Unmapped{% endif %}</td>
               <td>{{ loc.special_designation or 'None' }}</td>
-              <td>{{ loc.job_creation_threshold or 'NAICS Dependent' }}</td>
-              <td>{{ loc.per_job_credit_amount or 'NAICS Dependent' }}</td>
+              <td>{{ loc.job_creation_threshold or 'Unavailable' }}</td>
+              <td>{{ loc.per_job_credit_amount or 'Unavailable' }}</td>
             </tr>
             {% endfor %}
           </tbody>
@@ -48,49 +60,135 @@
         <h2>Georgia Retraining Tax Credit</h2>
         <p>{{ report.narrative.get('retraining_intro', '') }}</p>
         <p>{{ report.narrative.get('retraining_context', '') }}</p>
+        <table>
+          <thead>
+            <tr>
+              <th>Retraining Feasibility</th>
+              <th>Confidence Score</th>
+              <th>Rationale</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>{{ report.narrative.get('retraining_feasibility', 'Possible') }}</td>
+              <td>{{ report.narrative.get('retraining_confidence_pct', 0) }}%</td>
+              <td>{{ report.narrative.get('retraining_rationale', '') }}</td>
+            </tr>
+          </tbody>
+        </table>
 
-        <ul>
-          <li><strong>SOFTWARE SYSTEMS</strong></li>
-          {% for item in report.sector_profile.software_systems %}
-          <li>{{ item }}</li>
-          {% endfor %}
-        </ul>
-
-        <ul>
-          <li><strong>EQUIPMENT</strong></li>
-          {% for item in report.sector_profile.equipment %}
-          <li>{{ item }}</li>
-          {% endfor %}
-        </ul>
+        <table>
+          <thead>
+            <tr>
+              <th>Type</th>
+              <th>Category</th>
+              <th>Applicable Programs / Systems</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in report.narrative.get('retraining_rows', []) %}
+            <tr>
+              <td>{{ row.type }}</td>
+              <td>{{ row.category }}</td>
+              <td>{{ row.applicable_programs|join(', ') }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
       </section>
 
       <section class="doc-section">
         <h2>Federal &amp; State Research and Development Credit</h2>
         <p>{{ report.narrative.get('rd_intro', '') }}</p>
         <p>{{ report.narrative.get('rd_examples_intro', '') }}</p>
-        <ul>
-          <li><strong>Custom engineering &amp; design work</strong> - Project-specific systems, assemblies, or models requiring technical problem solving.</li>
-          <li><strong>Prefabrication &amp; fabrication innovation</strong> - Developing, testing, and refining builds or workflows for speed, safety, or efficiency.</li>
-          <li><strong>Modeling and coordination iteration</strong> - Iterating layouts and routing to resolve design and constructability constraints.</li>
-          <li><strong>New methods &amp; process improvement</strong> - Creating or refining installation/fabrication methods where outcomes were uncertain.</li>
-          <li><strong>Testing, prototyping &amp; troubleshooting</strong> - Field/shop testing and rework to validate designs or resolve performance issues.</li>
-        </ul>
+        <table>
+          <thead>
+            <tr>
+              <th>R&amp;D Feasibility</th>
+              <th>Confidence Score</th>
+              <th>Rationale</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>{{ report.narrative.get('rd_feasibility', 'Possible') }}</td>
+              <td>{{ report.narrative.get('rd_confidence_pct', 0) }}%</td>
+              <td>{{ report.narrative.get('rd_rationale', '') }}</td>
+            </tr>
+          </tbody>
+        </table>
+        <table>
+          <thead>
+            <tr>
+              <th>Type</th>
+              <th>Category</th>
+              <th>Potential Qualifying Activities</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in report.narrative.get('rd_rows', []) %}
+            <tr>
+              <td>R&amp;D Activity</td>
+              <td>{{ row.category }}</td>
+              <td>{{ row.activities|join(', ') }}</td>
+            </tr>
+            {% endfor %}
+            {% if not report.narrative.get('rd_rows') %}
+            {% for item in report.narrative.get('rd_focus_examples', []) %}
+            <tr>
+              <td>R&amp;D Activity</td>
+              <td>Potential Activity</td>
+              <td>{{ item }}</td>
+            </tr>
+            {% endfor %}
+            {% endif %}
+          </tbody>
+        </table>
       </section>
 
-      <section class="doc-section">
-        <h2>Cost Segregation</h2>
-        <p>{{ report.narrative.get('costseg_intro', '') }}</p>
-        <p>{{ report.narrative.get('costseg_detail', '') }}</p>
-        <p>{{ report.narrative.get('costseg_bonus', '') }}</p>
-      </section>
-
-      {% if report.expansion_signals %}
       <section class="doc-section">
         <h2>Georgia Investment Tax Credit</h2>
-        <p>Expansion or capital investment signals were detected in the researched company content. Georgia investment credit eligibility can be impacted by county tier, qualified investment property, and placement-in-service timing.</p>
-        <p><strong>Detected signals:</strong> {{ report.expansion_signals|join(', ') }}</p>
+        <table>
+          <thead>
+            <tr>
+              <th>ITC Feasibility</th>
+              <th>Confidence Score</th>
+              <th>Rationale</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>{{ report.narrative.get('investment_status', 'possible')|title }}</td>
+              <td>{{ report.narrative.get('investment_confidence_pct', 0) }}%</td>
+              <td>{{ report.narrative.get('investment_rationale', '') }}</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>{{ report.narrative.get('investment_signals_summary', '') }}</p>
+        <table>
+          <thead>
+            <tr>
+              <th>County</th>
+              <th>Tier</th>
+              <th>Investment Tax Credit %</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% if not report.locations %}
+            <tr>
+              <td colspan="3">No Georgia location data found to compute county tier and investment credit percentages.</td>
+            </tr>
+            {% endif %}
+            {% for loc in report.locations %}
+            <tr>
+              <td>{{ loc.county or '-' }}</td>
+              <td>{% if loc.ga_tier %}Tier {{ loc.ga_tier }}{% else %}Unmapped{% endif %}</td>
+              <td>{{ loc.investment_tax_credit_pct or 'Needs verification' }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
       </section>
-      {% endif %}
 
       <section class="doc-section subtle">
         <h3>Automation Evidence Log</h3>

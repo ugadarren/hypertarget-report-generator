@@ -5,7 +5,8 @@ Standalone web app that generates draft tax incentive reports from a company web
 ## What it does
 
 - Accepts company name, website, and one or more addresses.
-- If no address is entered, attempts to auto-detect addresses from website content.
+- Sector can be entered manually as an override, or left blank for ChatGPT auto-detection.
+- Address lookup is manual-only; enter one or more company addresses per report.
 - Scrapes website text and extracts signals (industry, expansion, property).
 - Geocodes addresses and maps county -> Georgia Job Tax Credit tier.
 - Uses the Georgia DCA ArcGIS webmap layers for spatial checks when available:
@@ -22,11 +23,12 @@ Standalone web app that generates draft tax incentive reports from a company web
     - Georgia Retraining Tax Credit
     - Federal R&D Credit
     - Georgia R&D Credit
-    - Cost Segregation
     - Georgia Investment Tax Credit
     - MERP (self-insured reimbursement strategy)
 - Saves every report as JSON and serves an HTML report page.
 - Exports reports to Microsoft Word (`.docx`) from the report page.
+- Uses GPT (when configured) to detect sector from website content and enrich company-specific narrative, systems/equipment, retraining examples, and likely R&D activities.
+- Sector corrections can be captured for continuous tuning.
 
 ## Quick start
 
@@ -45,11 +47,46 @@ To use the map explorer business search, set:
 export GOOGLE_MAPS_API_KEY="your-key"
 ```
 
+Optional GPT enrichment:
+
+```bash
+export OPENAI_API_KEY="your-openai-key"
+export OPENAI_MODEL="gpt-4.1-mini"
+```
+
 Optional ArcGIS source override:
 
 ```bash
 export ARCGIS_VIEWER_URL="https://experience.arcgis.com/experience/e655a4ebd5e94cdd9a731822f59d2097"
 ```
+
+## Deploy Online For Coworker Testing
+
+### Option 1: Render (recommended)
+
+1. Push this repo to GitHub.
+2. In Render, click **New +** -> **Blueprint**.
+3. Select your repo; Render will read [`render.yaml`](/Users/Darren1/Desktop/HyperTarget/render.yaml).
+4. Set required environment variables in Render:
+   - `OPENAI_API_KEY`
+   - `ARCGIS_VIEWER_URL` (optional override; can leave unset to use default)
+5. Deploy and share the generated `onrender.com` URL.
+
+### Option 2: Railway
+
+1. Push this repo to GitHub.
+2. In Railway, click **New Project** -> **Deploy from GitHub Repo**.
+3. Railway will use [`Procfile`](/Users/Darren1/Desktop/HyperTarget/Procfile) to start the app.
+4. Add environment variables:
+   - `OPENAI_API_KEY`
+   - `OPENAI_MODEL` (optional, default `gpt-4.1-mini`)
+   - `ARCGIS_VIEWER_URL` (optional)
+5. Deploy and share the generated Railway URL.
+
+### Notes for hosted testing
+
+- Reports are saved to local container storage (`/app/reports`), which is ephemeral on most platforms.
+- This is fine for shared testing; persistent storage can be added later if needed.
 
 ## API
 
@@ -58,6 +95,7 @@ export ARCGIS_VIEWER_URL="https://experience.arcgis.com/experience/e655a4ebd5e94
 ```json
 {
   "company_name": "Ace Electric",
+  "sector": "Electrical Contracting",
   "website": "https://example.com",
   "addresses": [{"raw": "123 Main St, Atlanta, GA 30303"}],
   "notes": "New facility announced in 2025"
@@ -77,6 +115,11 @@ Word export:
 
 - Browser: open `/reports/{report_id}` and click **Download Microsoft Word (.docx)**.
 - API path: `GET /reports/{report_id}/download/docx`
+
+Sector correction capture:
+
+- API path: `POST /api/sector-corrections`
+- Stores feedback in `reports/sector_corrections.jsonl`
 
 ## Data notes
 

@@ -62,6 +62,11 @@ class WordExportService:
         parts: list[str] = []
 
         parts.append(_p(f"{report.company_name} Tax Incentive Summary", bold=True))
+        parts.append(_p("Company Sector and Industry Analysis", bold=True))
+        parts.append(_p(f"Detected Sector: {report.narrative.get('sector_title', report.sector_profile.sector)}"))
+        parts.append(_p(f"Company Description: {report.narrative.get('company_description', '')}"))
+        parts.append(_p(report.narrative.get("sector_summary", "")))
+
         parts.append(_p("GA Job Tax Credit", bold=True))
         parts.append(_p(report.narrative.get("ga_jtc_intro", "")))
         parts.append(_p(report.narrative.get("ga_jtc_note", "")))
@@ -81,49 +86,89 @@ class WordExportService:
                 loc.county or "-",
                 f"Tier {loc.ga_tier}" if loc.ga_tier else "Unmapped",
                 loc.special_designation or "None",
-                loc.job_creation_threshold or "NAICS Dependent",
-                loc.per_job_credit_amount or "NAICS Dependent",
+                loc.job_creation_threshold or "Unavailable",
+                loc.per_job_credit_amount or "Unavailable",
             ])
         parts.append(_table(headers, rows))
 
         parts.append(_p("Georgia Retraining Tax Credit", bold=True))
         parts.append(_p(report.narrative.get("retraining_intro", "")))
         parts.append(_p(report.narrative.get("retraining_context", "")))
-        parts.append(_p("SOFTWARE SYSTEMS", bold=True))
-        for item in report.sector_profile.software_systems:
-            parts.append(_p(f"- {item}"))
-
-        parts.append(_p("EQUIPMENT", bold=True))
-        for item in report.sector_profile.equipment:
-            parts.append(_p(f"- {item}"))
+        retraining_summary_headers = ["Retraining Feasibility", "Confidence Score", "Rationale"]
+        retraining_summary_rows = [
+            [
+                str(report.narrative.get("retraining_feasibility", "Possible")),
+                f"{report.narrative.get('retraining_confidence_pct', 0)}%",
+                str(report.narrative.get("retraining_rationale", "")),
+            ]
+        ]
+        parts.append(_table(retraining_summary_headers, retraining_summary_rows))
+        tech_headers = [
+            "Type",
+            "Category",
+            "Applicable Programs / Systems",
+        ]
+        tech_rows: list[list[str]] = []
+        for item in report.narrative.get("retraining_rows", []):
+            tech_rows.append(
+                [
+                    item.get("type", ""),
+                    item.get("category", ""),
+                    ", ".join(item.get("applicable_programs", [])),
+                ]
+            )
+        parts.append(_table(tech_headers, tech_rows))
 
         parts.append(_p("Federal & State Research and Development Credit", bold=True))
         parts.append(_p(report.narrative.get("rd_intro", "")))
         parts.append(_p(report.narrative.get("rd_examples_intro", "")))
-        rd_examples = [
-            "Custom engineering and design work for project-specific technical challenges.",
-            "Prefabrication and fabrication innovation to improve speed, safety, and efficiency.",
-            "Modeling and coordination iteration to resolve routing and constructability constraints.",
-            "New methods and process improvements with uncertain outcomes.",
-            "Testing, prototyping, and troubleshooting performed to validate designs.",
+        rd_summary_headers = ["R&D Feasibility", "Confidence Score", "Rationale"]
+        rd_summary_rows = [
+            [
+                str(report.narrative.get("rd_feasibility", "Possible")),
+                f"{report.narrative.get('rd_confidence_pct', 0)}%",
+                str(report.narrative.get("rd_rationale", "")),
+            ]
         ]
-        for example in rd_examples:
-            parts.append(_p(f"- {example}"))
+        parts.append(_table(rd_summary_headers, rd_summary_rows))
 
-        parts.append(_p("Cost Segregation", bold=True))
-        parts.append(_p(report.narrative.get("costseg_intro", "")))
-        parts.append(_p(report.narrative.get("costseg_detail", "")))
-        parts.append(_p(report.narrative.get("costseg_bonus", "")))
-
-        if report.expansion_signals:
-            parts.append(_p("Georgia Investment Tax Credit", bold=True))
-            parts.append(
-                _p(
-                    "Expansion or capital investment signals were detected in researched company content. "
-                    "Eligibility depends on county tier, qualified investment property, and placement-in-service timing."
-                )
+        rd_headers = ["Type", "Category", "Potential Qualifying Activities"]
+        rd_rows: list[list[str]] = []
+        for row in report.narrative.get("rd_rows", []):
+            rd_rows.append(
+                [
+                    "R&D Activity",
+                    str(row.get("category", "")),
+                    ", ".join(row.get("activities", [])),
+                ]
             )
-            parts.append(_p("Detected signals: " + ", ".join(report.expansion_signals)))
+        if not rd_rows:
+            for example in report.narrative.get("rd_focus_examples", []):
+                rd_rows.append(["R&D Activity", "Potential Activity", str(example)])
+        parts.append(_table(rd_headers, rd_rows))
+
+        parts.append(_p("Georgia Investment Tax Credit", bold=True))
+        investment_summary_headers = ["ITC Feasibility", "Confidence Score", "Rationale"]
+        investment_summary_rows = [
+            [
+                str(report.narrative.get("investment_status", "possible")).title(),
+                f"{report.narrative.get('investment_confidence_pct', 0)}%",
+                str(report.narrative.get("investment_rationale", "")),
+            ]
+        ]
+        parts.append(_table(investment_summary_headers, investment_summary_rows))
+        parts.append(_p(str(report.narrative.get("investment_signals_summary", ""))))
+        inv_headers = ["County", "Tier", "Investment Tax Credit %"]
+        inv_rows: list[list[str]] = []
+        for loc in report.locations:
+            inv_rows.append(
+                [
+                    loc.county or "-",
+                    f"Tier {loc.ga_tier}" if loc.ga_tier else "Unmapped",
+                    loc.investment_tax_credit_pct or "Needs verification",
+                ]
+            )
+        parts.append(_table(inv_headers, inv_rows))
 
         parts.append(_p("Automation Evidence Log", bold=True))
         for src in report.source_log:

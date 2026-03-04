@@ -8,8 +8,9 @@ from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-from app.models import AddressInput, CompanyInput, GenerateResponse
+from app.models import AddressInput, CompanyInput, GenerateResponse, SectorCorrectionInput
 from app.services.designation_map import ArcGISDesignationService
+from app.services.feedback_service import FeedbackService
 from app.services.report_service import ReportService
 from app.services.word_export import WordExportService
 
@@ -17,6 +18,7 @@ BASE_DIR = Path(__file__).resolve().parent
 service = ReportService(data_dir=BASE_DIR / "data", reports_dir=BASE_DIR.parent / "reports")
 word_export = WordExportService(exports_dir=BASE_DIR.parent / "reports" / "exports")
 designation_service = ArcGISDesignationService()
+feedback_service = FeedbackService(reports_dir=BASE_DIR.parent / "reports")
 
 app = FastAPI(title="HyperTarget Incentive Report Generator", version="0.1.0")
 app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
@@ -43,6 +45,7 @@ async def designation_explorer(request: Request):
 async def generate_from_form(
     request: Request,
     company_name: str = Form(...),
+    sector: str = Form(""),
     website: str = Form(""),
     addresses: str = Form(""),
     notes: str = Form(""),
@@ -50,6 +53,7 @@ async def generate_from_form(
     address_rows = [row.strip() for row in addresses.splitlines() if row.strip()]
     payload = CompanyInput(
         company_name=company_name,
+        sector=sector or None,
         website=website or None,
         addresses=[AddressInput(raw=a) for a in address_rows],
         notes=notes or None,
@@ -78,6 +82,11 @@ async def report_json(report_id: str):
     if not report:
         raise HTTPException(status_code=404, detail="Report not found")
     return report.model_dump()
+
+
+@app.post("/api/sector-corrections")
+async def capture_sector_correction(payload: SectorCorrectionInput):
+    return feedback_service.record_sector_correction(payload)
 
 
 @app.get("/api/designations")

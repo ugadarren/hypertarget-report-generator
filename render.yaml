@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: hypertarget-report-generator
+    runtime: docker
+    autoDeploy: true
+    plan: starter
+    envVars:
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: OPENAI_MODEL
+        value: gpt-4.1-mini
+      - key: ARCGIS_VIEWER_URL
+        sync: false

@@ -19,8 +19,24 @@
           <input type="text" name="company_name" required placeholder="Ace Electric" />
         </label>
 
+        <label>Industry / Sector
+          <input list="sector-options" type="text" name="sector" placeholder="Optional override. Leave blank for ChatGPT auto-detection." />
+          <datalist id="sector-options">
+            <option value="Healthcare"></option>
+            <option value="Manufacturing"></option>
+            <option value="Staffing and Recruiting"></option>
+            <option value="Software and Technology"></option>
+            <option value="Telecommunications"></option>
+            <option value="Electrical Contracting"></option>
+            <option value="Construction"></option>
+            <option value="Logistics and Distribution"></option>
+            <option value="Food and Beverage Processing"></option>
+            <option value="Automotive and Components"></option>
+          </datalist>
+        </label>
+
         <label>Website
-          <input type="url" name="website" placeholder="https://example.com" />
+          <input type="text" name="website" placeholder="example.com" />
         </label>
 
         <label>Addresses (one per line)
