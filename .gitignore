@@ -7,3 +7,7 @@ __pycache__/
 *.pyc
 reports/*.json
 reports/exports/*.docx
+__pycache__/
+*.pyc
+reports/*.json
+reports/exports/*.docx
