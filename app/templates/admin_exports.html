@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Exports</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <main class="container report-doc">
+      <header>
+        <h1>Admin - Saved DOCX Exports</h1>
+        <p><a class="button-link" href="/">Back to Generator</a></p>
+      </header>
+      <section class="doc-section">
+        <table>
+          <thead>
+            <tr>
+              <th>File</th>
+              <th>Size (KB)</th>
+              <th>Modified</th>
+              <th>Download</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% if not files %}
+            <tr>
+              <td colspan="4">No DOCX exports saved yet.</td>
+            </tr>
+            {% endif %}
+            {% for file in files %}
+            <tr>
+              <td>{{ file.name }}</td>
+              <td>{{ file.size_kb }}</td>
+              <td>{{ file.modified_at }}</td>
+              <td><a class="button-link" href="/admin/exports/{{ file.name }}">Download</a></td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </section>
+    </main>
+  </body>
+</html>

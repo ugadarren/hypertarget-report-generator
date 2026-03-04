@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
+from datetime import datetime
 
 from fastapi import FastAPI, Form, HTTPException, Request
 from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
@@ -28,6 +29,38 @@ templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
+
+
+@app.get("/admin/exports", response_class=HTMLResponse)
+async def admin_exports(request: Request):
+    exports_dir = BASE_DIR.parent / "reports" / "exports"
+    exports_dir.mkdir(parents=True, exist_ok=True)
+    files = []
+    for path in sorted(exports_dir.glob("*.docx"), key=lambda p: p.stat().st_mtime, reverse=True):
+        stat = path.stat()
+        files.append(
+            {
+                "name": path.name,
+                "size_kb": round(stat.st_size / 1024, 1),
+                "modified_at": datetime.fromtimestamp(stat.st_mtime).strftime("%Y-%m-%d %H:%M:%S"),
+            }
+        )
+    return templates.TemplateResponse("admin_exports.html", {"request": request, "files": files})
+
+
+@app.get("/admin/exports/{filename}")
+async def admin_download_export(filename: str):
+    if "/" in filename or "\\" in filename or not filename.endswith(".docx"):
+        raise HTTPException(status_code=400, detail="Invalid file name")
+    exports_dir = BASE_DIR.parent / "reports" / "exports"
+    path = exports_dir / filename
+    if not path.exists():
+        raise HTTPException(status_code=404, detail="Export file not found")
+    return FileResponse(
+        path=path,
+        filename=path.name,
+        media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    )
 
 
 @app.get("/designation-explorer", response_class=HTMLResponse)
@@ -59,12 +92,20 @@ async def generate_from_form(
         notes=notes or None,
     )
     report = service.generate(payload)
+    try:
+        word_export.export_report(report)
+    except RuntimeError:
+        pass
     return RedirectResponse(url=f"/reports/{report.id}", status_code=303)
 
 
 @app.post("/api/report/generate", response_model=GenerateResponse)
 async def generate_api(payload: CompanyInput):
     report = service.generate(payload)
+    try:
+        word_export.export_report(report)
+    except RuntimeError:
+        pass
     return GenerateResponse(report_id=report.id, report_url=f"/reports/{report.id}")
 
 

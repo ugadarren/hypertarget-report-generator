@@ -27,6 +27,7 @@ Standalone web app that generates draft tax incentive reports from a company web
     - MERP (self-insured reimbursement strategy)
 - Saves every report as JSON and serves an HTML report page.
 - Exports reports to Microsoft Word (`.docx`) from the report page.
+- Auto-saves a DOCX export for every generated report and lists saved files at `/admin/exports`.
 - Uses GPT (when configured) to detect sector from website content and enrich company-specific narrative, systems/equipment, retraining examples, and likely R&D activities.
 - Sector corrections can be captured for continuous tuning.
 
