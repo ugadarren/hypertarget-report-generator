@@ -1,52 +1,10 @@
 from __future__ import annotations
 
+import os
 import re
 from pathlib import Path
-from xml.sax.saxutils import escape
-from zipfile import ZIP_DEFLATED, ZipFile
 
 from app.models import Report
-
-
-CONTENT_TYPES_XML = """<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>
-<Types xmlns=\"http://schemas.openxmlformats.org/package/2006/content-types\">
-  <Default Extension=\"rels\" ContentType=\"application/vnd.openxmlformats-package.relationships+xml\"/>
-  <Default Extension=\"xml\" ContentType=\"application/xml\"/>
-  <Override PartName=\"/word/document.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml\"/>
-</Types>
-"""
-
-ROOT_RELS_XML = """<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>
-<Relationships xmlns=\"http://schemas.openxmlformats.org/package/2006/relationships\">
-  <Relationship Id=\"rId1\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument\" Target=\"word/document.xml\"/>
-</Relationships>
-"""
-
-DOC_RELS_XML = """<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>
-<Relationships xmlns=\"http://schemas.openxmlformats.org/package/2006/relationships\"/>
-"""
-
-
-def _p(text: str, bold: bool = False) -> str:
-    text = escape(text)
-    run_pr = "<w:rPr><w:b/></w:rPr>" if bold else ""
-    return (
-        "<w:p><w:r>"
-        f"{run_pr}<w:t xml:space=\"preserve\">{text}</w:t>"
-        "</w:r></w:p>"
-    )
-
-
-def _row(cells: list[str], header: bool = False) -> str:
-    parts = []
-    for cell in cells:
-        parts.append("<w:tc><w:p><w:r>" + ("<w:rPr><w:b/></w:rPr>" if header else "") + f"<w:t>{escape(cell)}</w:t></w:r></w:p></w:tc>")
-    return "<w:tr>" + "".join(parts) + "</w:tr>"
-
-
-def _table(headers: list[str], rows: list[list[str]]) -> str:
-    body = [_row(headers, header=True)] + [_row(r) for r in rows]
-    return "<w:tbl>" + "".join(body) + "</w:tbl>"
 
 
 class WordExportService:
@@ -58,140 +16,273 @@ class WordExportService:
         cleaned = re.sub(r"[^A-Za-z0-9]+", "_", value).strip("_")
         return cleaned[:80] or "report"
 
-    def _build_document_xml(self, report: Report) -> str:
-        parts: list[str] = []
+    def _docx_imports(self):
+        try:
+            from docx import Document
+            from docx.enum.text import WD_ALIGN_PARAGRAPH
+            from docx.oxml import OxmlElement
+            from docx.oxml.ns import qn
+            from docx.shared import Inches, Pt, RGBColor
 
-        parts.append(_p(f"{report.company_name} Tax Incentive Summary", bold=True))
-        parts.append(_p("Company Sector and Industry Analysis", bold=True))
-        parts.append(_p(f"Detected Sector: {report.narrative.get('sector_title', report.sector_profile.sector)}"))
-        parts.append(_p(f"Company Description: {report.narrative.get('company_description', '')}"))
-        parts.append(_p(report.narrative.get("sector_summary", "")))
+            return {
+                "Document": Document,
+                "WD_ALIGN_PARAGRAPH": WD_ALIGN_PARAGRAPH,
+                "OxmlElement": OxmlElement,
+                "qn": qn,
+                "Inches": Inches,
+                "Pt": Pt,
+                "RGBColor": RGBColor,
+            }
+        except Exception as exc:
+            raise RuntimeError(
+                "DOCX export requires python-docx. Install dependencies with `pip install -r requirements.txt`."
+            ) from exc
 
-        parts.append(_p("GA Job Tax Credit", bold=True))
-        parts.append(_p(report.narrative.get("ga_jtc_intro", "")))
-        parts.append(_p(report.narrative.get("ga_jtc_note", "")))
+    def _set_cell_shading(self, cell, fill: str, OxmlElement, qn) -> None:
+        tc_pr = cell._tc.get_or_add_tcPr()
+        shd = OxmlElement("w:shd")
+        shd.set(qn("w:val"), "clear")
+        shd.set(qn("w:color"), "auto")
+        shd.set(qn("w:fill"), fill)
+        tc_pr.append(shd)
 
-        headers = [
-            "GA Location",
-            "County",
-            "County Tier",
-            "Special Designation",
-            "Job Creation Threshold",
-            "Per Job Credit Amount",
-        ]
-        rows = []
-        for loc in report.locations:
-            rows.append([
-                loc.address,
-                loc.county or "-",
-                f"Tier {loc.ga_tier}" if loc.ga_tier else "Unmapped",
-                loc.special_designation or "None",
-                loc.job_creation_threshold or "Unavailable",
-                loc.per_job_credit_amount or "Unavailable",
-            ])
-        parts.append(_table(headers, rows))
+    def _style_document(self, document, Pt, Inches) -> None:
+        section = document.sections[0]
+        section.top_margin = Inches(0.7)
+        section.bottom_margin = Inches(0.7)
+        section.left_margin = Inches(0.75)
+        section.right_margin = Inches(0.75)
 
-        parts.append(_p("Georgia Retraining Tax Credit", bold=True))
-        parts.append(_p(report.narrative.get("retraining_intro", "")))
-        parts.append(_p(report.narrative.get("retraining_context", "")))
-        retraining_summary_headers = ["Retraining Feasibility", "Confidence Score", "Rationale"]
-        retraining_summary_rows = [
+        normal = document.styles["Normal"]
+        normal.font.name = "Calibri"
+        normal.font.size = Pt(10.5)
+
+        for style_name, size in (("Heading 1", 15), ("Heading 2", 12)):
+            style = document.styles[style_name]
+            style.font.name = "Calibri"
+            style.font.size = Pt(size)
+            style.font.bold = True
+
+    def _add_title(self, document, report: Report, WD_ALIGN_PARAGRAPH, Pt, RGBColor) -> None:
+        title = document.add_paragraph()
+        run = title.add_run(f"{report.company_name} Tax Incentive Summary")
+        run.bold = True
+        run.font.size = Pt(20)
+        run.font.color.rgb = RGBColor(0x11, 0x2D, 0x4E)
+        title.alignment = WD_ALIGN_PARAGRAPH.CENTER
+
+        subtitle = document.add_paragraph()
+        subrun = subtitle.add_run("Generated by HyperTarget Incentive Report Generator")
+        subrun.italic = True
+        subrun.font.size = Pt(9)
+        subrun.font.color.rgb = RGBColor(0x55, 0x55, 0x55)
+        subtitle.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        document.add_paragraph()
+
+    def _add_paragraph(self, document, text: str | None) -> None:
+        if text:
+            p = document.add_paragraph(text.strip())
+            p.paragraph_format.space_after = 6
+
+    def _add_section_heading(self, document, text: str) -> None:
+        h = document.add_paragraph(text, style="Heading 1")
+        h.paragraph_format.space_before = 12
+        h.paragraph_format.space_after = 6
+
+    def _add_table(self, document, headers: list[str], rows: list[list[str]], OxmlElement, qn, RGBColor, Pt) -> None:
+        row_count = max(1, len(rows)) + 1
+        table = document.add_table(rows=row_count, cols=len(headers))
+        table.style = "Table Grid"
+
+        hdr_cells = table.rows[0].cells
+        for idx, header in enumerate(headers):
+            hdr_cells[idx].text = header
+            self._set_cell_shading(hdr_cells[idx], "1F4E78", OxmlElement, qn)
+            p = hdr_cells[idx].paragraphs[0]
+            p.paragraph_format.space_before = 0
+            p.paragraph_format.space_after = 0
+            for run in p.runs:
+                run.bold = True
+                run.font.color.rgb = RGBColor(0xFF, 0xFF, 0xFF)
+                run.font.size = Pt(9.5)
+
+        body_rows = rows or [["No data available"] + [""] * (len(headers) - 1)]
+        for ridx, row in enumerate(body_rows, start=1):
+            cells = table.rows[ridx].cells
+            for cidx, value in enumerate(row):
+                cells[cidx].text = str(value or "")
+                p = cells[cidx].paragraphs[0]
+                p.paragraph_format.space_before = 0
+                p.paragraph_format.space_after = 0
+                for run in p.runs:
+                    run.font.size = Pt(9.5)
+            if ridx % 2 == 0:
+                for cell in cells:
+                    self._set_cell_shading(cell, "F4F7FB", OxmlElement, qn)
+        document.add_paragraph()
+
+    def _build_document(self, report: Report):
+        deps = self._docx_imports()
+        Document = deps["Document"]
+        WD_ALIGN_PARAGRAPH = deps["WD_ALIGN_PARAGRAPH"]
+        OxmlElement = deps["OxmlElement"]
+        qn = deps["qn"]
+        Inches = deps["Inches"]
+        Pt = deps["Pt"]
+        RGBColor = deps["RGBColor"]
+
+        template_path = os.getenv("WORD_TEMPLATE_PATH", "").strip()
+        if template_path and Path(template_path).exists():
+            document = Document(template_path)
+        else:
+            document = Document()
+
+        self._style_document(document, Pt, Inches)
+        self._add_title(document, report, WD_ALIGN_PARAGRAPH, Pt, RGBColor)
+
+        self._add_section_heading(document, "Company Sector and Industry Analysis")
+        self._add_paragraph(document, f"Detected Sector: {report.narrative.get('sector_title', report.sector_profile.sector)}")
+        self._add_paragraph(document, f"Company Description: {report.narrative.get('company_description', '')}")
+        self._add_paragraph(document, report.narrative.get("sector_summary", ""))
+
+        self._add_section_heading(document, "GA Job Tax Credit")
+        self._add_paragraph(document, report.narrative.get("ga_jtc_intro", ""))
+        self._add_paragraph(document, report.narrative.get("ga_jtc_note", ""))
+        self._add_table(
+            document,
+            ["GA Location", "County", "County Tier", "Special Designation", "Job Creation Threshold", "Per Job Credit Amount"],
             [
+                [
+                    loc.address,
+                    loc.county or "-",
+                    f"Tier {loc.ga_tier}" if loc.ga_tier else "Unmapped",
+                    loc.special_designation or "None",
+                    loc.job_creation_threshold or "Unavailable",
+                    loc.per_job_credit_amount or "Unavailable",
+                ]
+                for loc in report.locations
+            ],
+            OxmlElement,
+            qn,
+            RGBColor,
+            Pt,
+        )
+
+        self._add_section_heading(document, "Georgia Retraining Tax Credit")
+        self._add_paragraph(document, report.narrative.get("retraining_intro", ""))
+        self._add_paragraph(document, report.narrative.get("retraining_context", ""))
+        self._add_table(
+            document,
+            ["Retraining Feasibility", "Confidence Score", "Rationale"],
+            [[
                 str(report.narrative.get("retraining_feasibility", "Possible")),
                 f"{report.narrative.get('retraining_confidence_pct', 0)}%",
                 str(report.narrative.get("retraining_rationale", "")),
-            ]
-        ]
-        parts.append(_table(retraining_summary_headers, retraining_summary_rows))
-        tech_headers = [
-            "Type",
-            "Category",
-            "Applicable Programs / Systems",
-        ]
-        tech_rows: list[list[str]] = []
-        for item in report.narrative.get("retraining_rows", []):
-            tech_rows.append(
+            ]],
+            OxmlElement,
+            qn,
+            RGBColor,
+            Pt,
+        )
+        self._add_table(
+            document,
+            ["Type", "Category", "Applicable Programs / Systems"],
+            [
                 [
                     item.get("type", ""),
                     item.get("category", ""),
                     ", ".join(item.get("applicable_programs", [])),
                 ]
-            )
-        parts.append(_table(tech_headers, tech_rows))
+                for item in report.narrative.get("retraining_rows", [])
+            ],
+            OxmlElement,
+            qn,
+            RGBColor,
+            Pt,
+        )
 
-        parts.append(_p("Federal & State Research and Development Credit", bold=True))
-        parts.append(_p(report.narrative.get("rd_intro", "")))
-        parts.append(_p(report.narrative.get("rd_examples_intro", "")))
-        rd_summary_headers = ["R&D Feasibility", "Confidence Score", "Rationale"]
-        rd_summary_rows = [
-            [
+        self._add_section_heading(document, "Federal & State Research and Development Credit")
+        self._add_paragraph(document, report.narrative.get("rd_intro", ""))
+        self._add_paragraph(document, report.narrative.get("rd_examples_intro", ""))
+        self._add_table(
+            document,
+            ["R&D Feasibility", "Confidence Score", "Rationale"],
+            [[
                 str(report.narrative.get("rd_feasibility", "Possible")),
                 f"{report.narrative.get('rd_confidence_pct', 0)}%",
                 str(report.narrative.get("rd_rationale", "")),
-            ]
-        ]
-        parts.append(_table(rd_summary_headers, rd_summary_rows))
-
-        rd_headers = ["Type", "Category", "Potential Qualifying Activities"]
-        rd_rows: list[list[str]] = []
-        for row in report.narrative.get("rd_rows", []):
-            rd_rows.append(
-                [
-                    "R&D Activity",
-                    str(row.get("category", "")),
-                    ", ".join(row.get("activities", [])),
-                ]
-            )
-        if not rd_rows:
-            for example in report.narrative.get("rd_focus_examples", []):
-                rd_rows.append(["R&D Activity", "Potential Activity", str(example)])
-        parts.append(_table(rd_headers, rd_rows))
-
-        parts.append(_p("Georgia Investment Tax Credit", bold=True))
-        investment_summary_headers = ["ITC Feasibility", "Confidence Score", "Rationale"]
-        investment_summary_rows = [
+            ]],
+            OxmlElement,
+            qn,
+            RGBColor,
+            Pt,
+        )
+        rd_rows = [
             [
+                "R&D Activity",
+                str(row.get("category", "")),
+                ", ".join(row.get("activities", [])),
+            ]
+            for row in report.narrative.get("rd_rows", [])
+        ]
+        if not rd_rows:
+            rd_rows = [
+                ["R&D Activity", "Potential Activity", str(example)]
+                for example in report.narrative.get("rd_focus_examples", [])
+            ]
+        self._add_table(
+            document,
+            ["Type", "Category", "Potential Qualifying Activities"],
+            rd_rows,
+            OxmlElement,
+            qn,
+            RGBColor,
+            Pt,
+        )
+
+        self._add_section_heading(document, "Georgia Investment Tax Credit")
+        self._add_table(
+            document,
+            ["ITC Feasibility", "Confidence Score", "Rationale"],
+            [[
                 str(report.narrative.get("investment_status", "possible")).title(),
                 f"{report.narrative.get('investment_confidence_pct', 0)}%",
                 str(report.narrative.get("investment_rationale", "")),
-            ]
-        ]
-        parts.append(_table(investment_summary_headers, investment_summary_rows))
-        parts.append(_p(str(report.narrative.get("investment_signals_summary", ""))))
-        inv_headers = ["County", "Tier", "Investment Tax Credit %"]
-        inv_rows: list[list[str]] = []
-        for loc in report.locations:
-            inv_rows.append(
+            ]],
+            OxmlElement,
+            qn,
+            RGBColor,
+            Pt,
+        )
+        self._add_paragraph(document, str(report.narrative.get("investment_signals_summary", "")))
+        self._add_table(
+            document,
+            ["County", "Tier", "Investment Tax Credit %"],
+            [
                 [
                     loc.county or "-",
                     f"Tier {loc.ga_tier}" if loc.ga_tier else "Unmapped",
                     loc.investment_tax_credit_pct or "Needs verification",
                 ]
-            )
-        parts.append(_table(inv_headers, inv_rows))
+                for loc in report.locations
+            ],
+            OxmlElement,
+            qn,
+            RGBColor,
+            Pt,
+        )
 
-        parts.append(_p("Automation Evidence Log", bold=True))
+        self._add_section_heading(document, "Automation Evidence Log")
         for src in report.source_log:
             detail = src.get("detail", "")
             source = src.get("source", "")
-            parts.append(_p(f"- {source} - {detail}"))
+            self._add_paragraph(document, f"- {source} - {detail}")
 
-        body = "".join(parts) + "<w:sectPr/>"
-        return (
-            "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
-            "<w:document xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\">"
-            f"<w:body>{body}</w:body></w:document>"
-        )
+        return document
 
     def export_report(self, report: Report) -> Path:
         filename = f"{self._safe_slug(report.company_name)}_{report.id}.docx"
         output_path = self.exports_dir / filename
-        document_xml = self._build_document_xml(report)
-
-        with ZipFile(output_path, "w", ZIP_DEFLATED) as zf:
-            zf.writestr("[Content_Types].xml", CONTENT_TYPES_XML)
-            zf.writestr("_rels/.rels", ROOT_RELS_XML)
-            zf.writestr("word/document.xml", document_xml)
-            zf.writestr("word/_rels/document.xml.rels", DOC_RELS_XML)
-
+        document = self._build_document(report)
+        document.save(output_path)
         return output_path
