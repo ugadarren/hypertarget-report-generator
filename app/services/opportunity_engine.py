@@ -16,6 +16,26 @@ EXPANSION_PATTERNS = [
 ]
 
 
+def _is_rd_core_sector(sector: SectorProfile) -> bool:
+    # User policy: confidence should be conservative unless the company is
+    # in manufacturing or the physical/computer/engineering sciences space.
+    core_keys = {"manufacturing"}
+    if sector.sector_key in core_keys:
+        return True
+
+    label = (sector.sector or "").lower()
+    core_terms = [
+        "manufactur",
+        "engineering",
+        "computer",
+        "software",
+        "physical science",
+        "scientific",
+        "research",
+    ]
+    return any(term in label for term in core_terms)
+
+
 def _extract_signals(text: str, keywords: list[str]) -> list[str]:
     found = []
     for keyword in keywords:
@@ -80,6 +100,24 @@ def build_credit_assessments(
     rd_confidence = max(0.0, min(1.0, float(sector.rd_confidence)))
     if rd_signals:
         rd_confidence = max(rd_confidence, 0.68)
+
+    # Conservative guardrail for non-core R&D sectors.
+    # This avoids aggressive "likely/high confidence" outcomes for industries
+    # like logistics, staffing, and other service-heavy profiles.
+    if not _is_rd_core_sector(sector):
+        if rd_status == "likely":
+            rd_status = "possible"
+        # Cap confidence unless there is unusually strong technical signal density.
+        if len(rd_signals) >= 5:
+            rd_confidence = min(rd_confidence, 0.55)
+        elif len(rd_signals) >= 2:
+            rd_confidence = min(rd_confidence, 0.49)
+        else:
+            rd_confidence = min(rd_confidence, 0.42)
+        rd_rationale = (
+            f"{rd_rationale} Confidence is conservatively adjusted because {sector.sector} "
+            "is not typically a core R&D-intensive sector without clear technical-science evidence."
+        )
 
     credits.append(
         CreditAssessment(
