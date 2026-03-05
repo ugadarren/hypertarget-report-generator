@@ -58,7 +58,12 @@
 
       <section class="doc-section">
         <h2>Georgia Retraining Tax Credit</h2>
-        <p>{{ report.narrative.get('retraining_intro', '') }}</p>
+        <p>
+          {{ report.narrative.get('retraining_intro_lead', report.narrative.get('retraining_intro', '')) }}
+          {% if report.narrative.get('retraining_intro_emphasis') %}
+          <strong>{{ report.narrative.get('retraining_intro_emphasis', '') }}</strong>{{ report.narrative.get('retraining_intro_tail', '') }}
+          {% endif %}
+        </p>
         <p>{{ report.narrative.get('retraining_context', '') }}</p>
         <table>
           <thead>
@@ -148,6 +153,8 @@
 
       <section class="doc-section">
         <h2>Georgia Investment Tax Credit</h2>
+        <p>{{ report.narrative.get('investment_intro', '') }}</p>
+        <p>{{ report.narrative.get('investment_note', '') }}</p>
         <table>
           <thead>
             <tr>
@@ -188,6 +195,12 @@
             {% endfor %}
           </tbody>
         </table>
+      </section>
+
+      <section class="doc-section">
+        <h2>Cost Segregation</h2>
+        <p>{{ report.narrative.get('costseg_intro', '') }}</p>
+        <p>{{ report.narrative.get('costseg_note', '') }}</p>
       </section>
 
       <section class="doc-section subtle">

@@ -471,8 +471,8 @@ def _investment_credit_pct_for_tier(tier_value: str | None) -> str | None:
     tier_num = int(normalized)
     # Tier-based draft percentages for GA Investment Tax Credit.
     percentages = {
-        1: "8%",
-        2: "5%",
+        1: "5%",
+        2: "3%",
         3: "3%",
         4: "1%",
     }

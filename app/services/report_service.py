@@ -200,30 +200,47 @@ class ReportService:
             "sector_summary": sector.sector_summary
             or "Industry classification is based on website language and should be analyst-reviewed.",
             "ga_jtc_intro": (
-                "The GA JTC offers a dollar-for-dollar reduction of state income tax liability when creating new jobs "
-                "in certain areas. Counties are designated Tier 1 through Tier 4, with Military Zones, Less Developed "
-                "Census Tracts (LDCT), and Opportunity Zones often supporting lower thresholds and larger benefits."
+                "The Georgia Job Tax Credit rewards businesses that create new full-time jobs in the state by "
+                "providing a tax credit ranging from $1,250 to $4,000 per job per year for up to five years, "
+                "depending on the county. For business owners, this can significantly reduce Georgia income tax "
+                "liability and, in some cases, offset payroll withholding, lowering the cost of expanding their workforce."
             ),
             "ga_jtc_note": (
-                f"{payload.company_name} Georgia locations with corresponding tier designations and estimated credit "
-                "benefits are shown below based on county tier and special designations."
+                f"{payload.company_name}'s Georgia location(s) are listed below with their corresponding tier "
+                "designations and estimated credit benefits."
             ),
             "retraining_intro": (
-                "The GA Retraining Tax Credit can provide up to 50% of eligible retraining costs, including wages of "
-                "trainees, up to $1,250 per employee per year."
+                "The Georgia RTC provides businesses with a tax credit of up to 50% of eligible training costs for "
+                "retraining existing employees to upgrade skills, adopt new technologies, or improve productivity. "
+                "For business owners, it reduces the cost of workforce development, by up to $1,250 per employee per "
+                "year, while helping employees stay competitive and efficient as the company grows."
+            ),
+            "retraining_intro_lead": (
+                "The Georgia RTC provides businesses with a tax credit of up to 50% of eligible training costs for "
+                "retraining existing employees to upgrade skills, adopt new technologies, or improve productivity. "
+                "For business owners, it reduces the cost of workforce development, "
+            ),
+            "retraining_intro_emphasis": "by up to $1,250 per employee per year",
+            "retraining_intro_tail": (
+                ", while helping employees stay competitive and efficient as the company grows."
             ),
             "retraining_context": (
-                "Below are industry-specific software and equipment categories with applicable programs. "
-                "If implemented and employees were retrained to use them, these categories may support GA RTC claims."
+                "Below are some examples of software systems and equipment relevant to your industry that may qualify "
+                "for the GA RTC."
             ),
             "retraining_feasibility": (ga_retraining.status if ga_retraining else "possible").title(),
             "retraining_confidence_pct": round(((ga_retraining.confidence if ga_retraining else 0.6) or 0) * 100),
             "retraining_rationale": (ga_retraining.rationale if ga_retraining else "Retraining potential estimated from sector systems and equipment."),
             "rd_intro": (
-                "Federal and Georgia R&D credits can provide tax relief on qualified technical activities, typically "
-                "as a percentage of qualified research spend including eligible wages."
+                "The Federal and Georgia R&D Tax Credits reward businesses that invest in developing or improving "
+                "products, processes, or software, typically providing a combined tax benefit of roughly 10-20% of "
+                "qualified research expenses. For business owners, this can significantly reduce federal and state tax "
+                "liability-or offset payroll taxes in some cases-freeing up cash to reinvest in innovation, hiring, and growth."
             ),
-            "rd_examples_intro": f"R&D feasibility and potential qualifying activities for {payload.company_name}:",
+            "rd_examples_intro": (
+                f"Below are potential qualifying activities for {payload.company_name} that are specific to the "
+                "industry in which you operate."
+            ),
             "rd_feasibility": (federal_rd.status if federal_rd else sector.rd_feasibility).title(),
             "rd_confidence_pct": round(((federal_rd.confidence if federal_rd else sector.rd_confidence) or 0) * 100),
             "rd_rationale": (federal_rd.rationale if federal_rd else sector.rd_rationale) or "",
@@ -233,10 +250,33 @@ class ReportService:
             "investment_status": ga_investment.status if ga_investment else "possible",
             "investment_rationale": ga_investment.rationale if ga_investment else "",
             "investment_confidence_pct": round(((ga_investment.confidence if ga_investment else 0.5) or 0) * 100),
+            "investment_intro": (
+                "The Georgia Investment Tax Credit rewards manufacturing, warehousing, and telecom businesses that "
+                "invest in new equipment or facilities by providing a state tax credit of 1% to 8% of qualified "
+                "capital investment, depending on the county and industry. For business owners, this credit helps "
+                "offset Georgia income tax liability and lowers the overall cost of expanding operations, upgrading "
+                "equipment, or increasing production capacity."
+            ),
+            "investment_note": (
+                f"The County, tier, and potential investment credit percentage are listed below for "
+                f"{payload.company_name}'s location(s)."
+            ),
             "investment_signals_summary": _investment_client_summary(
                 payload.company_name,
                 expansion_signals,
                 ga_investment.status if ga_investment else "possible",
+            ),
+            "costseg_intro": (
+                "Cost Segregation is a tax strategy that allows commercial property owners to accelerate depreciation "
+                "on certain building components, often enabling 20-40% of the property's value to be depreciated "
+                "within the first 5-15 years instead of 39 years. For business owners, this acceleration can create "
+                "significant upfront tax savings and improved cash flow that can be reinvested back into the business."
+            ),
+            "costseg_note": (
+                "If you've purchased, built, or renovated commercial real estate in the last five years, a Cost "
+                "Segregation study may allow you to accelerate depreciation and unlock significant tax savings. It's "
+                "often worth taking a look to see how much additional cash flow you could generate by reclassifying "
+                "parts of the property into shorter depreciation schedules."
             ),
         }
 
