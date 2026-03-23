@@ -1,0 +1,15 @@
+{
+  "policy_year": "2025",
+  "county_tiers": {
+    "effective_year": "2025",
+    "source": "/Users/Darren1/Library/CloudStorage/GoogleDrive-dmiller@eagleadvisorypartners.com/Shared drives/EAP Shared Drive/Incentive Data and Materials/GA JTC/JTC Data Reference Material/ga_county_tiers_history_source.csv",
+    "source_date": "2026-01-01",
+    "notes": "Update annually when DCA releases revised county tier rankings."
+  },
+  "credit_policy": {
+    "effective_year": "2026",
+    "source": "HyperTarget internal policy configuration based on Georgia credit program guidance",
+    "source_date": "2026-01-01",
+    "notes": "Update annually or whenever statutory/program guidance changes."
+  }
+}

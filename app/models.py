@@ -27,6 +27,7 @@ class LocationAssessment(BaseModel):
     job_creation_threshold: str | None = None
     per_job_credit_amount: str | None = None
     investment_tax_credit_pct: str | None = None
+    tier_history: list[str] = Field(default_factory=list)
     zone_details: dict[str, Any] = Field(default_factory=dict)
     confidence: float = 0.0
     evidence: list[str] = Field(default_factory=list)
@@ -66,6 +67,15 @@ class SectorProfile(BaseModel):
     evidence: list[str] = Field(default_factory=list)
 
 
+class ContactLead(BaseModel):
+    name: str | None = None
+    title: str | None = None
+    email: str | None = None
+    confidence: float = 0.0
+    source_url: str | None = None
+    notes: str | None = None
+
+
 class CompanyInput(BaseModel):
     company_name: str
     sector: str | None = None
@@ -100,6 +110,7 @@ class Report(BaseModel):
     credits: list[CreditAssessment]
     expansion_signals: list[str] = Field(default_factory=list)
     property_signals: list[str] = Field(default_factory=list)
+    contact_intelligence: list[ContactLead] = Field(default_factory=list)
     narrative: dict[str, Any] = Field(default_factory=dict)
     source_log: list[dict[str, Any]] = Field(default_factory=list)
 

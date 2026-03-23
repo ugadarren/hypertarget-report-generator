@@ -23,6 +23,11 @@ PRIORITY_LINK_TERMS = [
     "expansion",
     "investor",
 ]
+EMAIL_PATTERN = re.compile(r"\b[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}\b")
+TITLE_PATTERNS = [
+    re.compile(r"\b(Owner|Founder|Co[- ]Founder|CEO|President|Principal|Managing Partner)\b", re.IGNORECASE),
+    re.compile(r"\b(Chief Executive Officer|Managing Director|Executive Director)\b", re.IGNORECASE),
+]
 
 
 @dataclass
@@ -30,6 +35,7 @@ class WebResearchResult:
     text: str
     snippets: list[str]
     discovered_addresses: list[str]
+    contact_leads: list[dict]
     weighted_texts: dict[str, str]
     source_log: list[dict]
 
@@ -126,6 +132,117 @@ def _extract_addresses(soup: BeautifulSoup, visible_text: str) -> list[str]:
     matches.extend(pattern_no_commas.findall(all_scripts))
 
     return _dedupe(matches)[:20]
+
+
+def _looks_like_name(value: str) -> bool:
+    cleaned = (value or "").strip()
+    if not cleaned:
+        return False
+    parts = [p for p in re.split(r"\s+", cleaned) if p]
+    if len(parts) < 2 or len(parts) > 4:
+        return False
+    for p in parts:
+        p = p.strip(",. ")
+        if not p or not re.match(r"^[A-Z][a-zA-Z'\-]+$", p):
+            return False
+    return True
+
+
+def _guess_title(text: str) -> str | None:
+    for pattern in TITLE_PATTERNS:
+        match = pattern.search(text or "")
+        if match:
+            return match.group(1).strip()
+    return None
+
+
+def _extract_contact_leads(soup: BeautifulSoup, visible_text: str, source_url: str) -> list[dict]:
+    found_emails: list[str] = []
+    found_emails.extend(EMAIL_PATTERN.findall(visible_text or ""))
+    for link in soup.find_all("a", href=True):
+        href = (link.get("href") or "").strip()
+        if href.lower().startswith("mailto:"):
+            email = href.split(":", 1)[1].split("?", 1)[0].strip()
+            if email:
+                found_emails.append(email)
+    emails = _dedupe(found_emails)[:20]
+
+    candidates: list[dict] = []
+    blocks: list[str] = []
+    for tag in soup.find_all(["h1", "h2", "h3", "h4", "p", "li", "strong"], limit=300):
+        block = _clean_text(tag.get_text(" "))
+        if 8 <= len(block) <= 220:
+            blocks.append(block)
+
+    role_name_patterns = [
+        re.compile(
+            r"\b(?:Owner|Founder|Co[- ]Founder|CEO|President|Principal|Managing Partner|Managing Director|Executive Director)\b"
+            r"\s*[:\-]\s*([A-Z][a-zA-Z'\-]+(?:\s+[A-Z][a-zA-Z'\-]+){1,3})"
+        ),
+        re.compile(
+            r"([A-Z][a-zA-Z'\-]+(?:\s+[A-Z][a-zA-Z'\-]+){1,3})\s*[,|-]\s*"
+            r"(?:Owner|Founder|Co[- ]Founder|CEO|President|Principal|Managing Partner|Managing Director|Executive Director)\b"
+        ),
+    ]
+
+    for block in blocks:
+        name = None
+        title = _guess_title(block)
+        for pattern in role_name_patterns:
+            match = pattern.search(block)
+            if match:
+                name = match.group(1).strip()
+                break
+        if not name or not _looks_like_name(name):
+            continue
+
+        matched_email = None
+        first = name.split()[0].lower()
+        last = name.split()[-1].lower()
+        for email in emails:
+            local = email.split("@", 1)[0].lower()
+            if first in local or last in local:
+                matched_email = email
+                break
+        if not matched_email and len(emails) == 1:
+            matched_email = emails[0]
+
+        confidence = 0.62
+        if title:
+            confidence += 0.12
+        if matched_email:
+            confidence += 0.18
+
+        candidates.append(
+            {
+                "name": name,
+                "title": title,
+                "email": matched_email,
+                "confidence": round(min(confidence, 0.95), 2),
+                "source_url": source_url,
+                "notes": "Public website signal; verify role and current email before outreach.",
+            }
+        )
+
+    if not candidates and emails:
+        candidates.append(
+            {
+                "name": None,
+                "title": "General Contact",
+                "email": emails[0],
+                "confidence": 0.45,
+                "source_url": source_url,
+                "notes": "General public contact found; not confirmed as owner/decision-maker.",
+            }
+        )
+
+    deduped: dict[str, dict] = {}
+    for candidate in candidates:
+        key = f"{(candidate.get('name') or '').lower()}|{(candidate.get('email') or '').lower()}"
+        existing = deduped.get(key)
+        if not existing or float(candidate.get("confidence") or 0) > float(existing.get("confidence") or 0):
+            deduped[key] = candidate
+    return sorted(deduped.values(), key=lambda item: float(item.get("confidence") or 0), reverse=True)[:6]
 
 
 def _extract_summary_candidates(soup: BeautifulSoup) -> list[str]:
@@ -250,13 +367,21 @@ def _fetch_and_parse(url: str, session: requests.Session) -> tuple[BeautifulSoup
 
 def scrape_website(url: str | None, max_snippets: int = 30, max_pages: int = 10) -> WebResearchResult:
     if not url:
-        return WebResearchResult(text="", snippets=[], discovered_addresses=[], weighted_texts={}, source_log=[])
+        return WebResearchResult(
+            text="",
+            snippets=[],
+            discovered_addresses=[],
+            contact_leads=[],
+            weighted_texts={},
+            source_log=[],
+        )
 
     session = requests.Session()
     session.headers.update({"User-Agent": USER_AGENT})
 
     all_text_parts: list[str] = []
     all_addresses: list[str] = []
+    all_contacts: list[dict] = []
     all_summary_candidates: list[str] = []
     weighted_buckets: dict[str, list[str]] = {
         "title": [],
@@ -273,12 +398,14 @@ def scrape_website(url: str | None, max_snippets: int = 30, max_pages: int = 10)
             text="",
             snippets=[],
             discovered_addresses=[],
+            contact_leads=[],
             weighted_texts={},
             source_log=[{"source": str(url), "type": "error", "detail": homepage_err}],
         )
 
     all_text_parts.append(homepage_text)
     all_addresses.extend(_extract_addresses(homepage_soup, homepage_text))
+    all_contacts.extend(_extract_contact_leads(homepage_soup, homepage_text, str(url)))
     all_summary_candidates.extend(_extract_summary_candidates(homepage_soup))
     for key, value in _extract_weighted_fields(homepage_soup).items():
         if value:
@@ -305,6 +432,7 @@ def scrape_website(url: str | None, max_snippets: int = 30, max_pages: int = 10)
 
         all_text_parts.append(page_text)
         all_addresses.extend(_extract_addresses(soup, page_text))
+        all_contacts.extend(_extract_contact_leads(soup, page_text, link))
         all_summary_candidates.extend(_extract_summary_candidates(soup))
         for key, value in _extract_weighted_fields(soup).items():
             if value:
@@ -315,6 +443,17 @@ def scrape_website(url: str | None, max_snippets: int = 30, max_pages: int = 10)
     sentences = [s.strip() for s in re.split(r"[.!?]", combined_text) if len(s.strip()) > 40]
     snippets = _dedupe(all_summary_candidates + sentences)[:max_snippets]
     discovered_addresses = _dedupe(all_addresses)[:30]
+    deduped_contacts: dict[str, dict] = {}
+    for contact in all_contacts:
+        key = f"{(contact.get('name') or '').lower()}|{(contact.get('email') or '').lower()}"
+        existing = deduped_contacts.get(key)
+        if not existing or float(contact.get("confidence") or 0) > float(existing.get("confidence") or 0):
+            deduped_contacts[key] = contact
+    contact_leads = sorted(
+        deduped_contacts.values(),
+        key=lambda item: float(item.get("confidence") or 0),
+        reverse=True,
+    )[:8]
     weighted_texts = {k: _clean_text(" ".join(v)) for k, v in weighted_buckets.items() if v}
 
     source_log.append(
@@ -323,7 +462,7 @@ def scrape_website(url: str | None, max_snippets: int = 30, max_pages: int = 10)
             "type": "extract",
             "detail": (
                 f"Crawled {len(visited)} page(s), checked {len(candidate_links)} candidate links, "
-                f"detected {len(discovered_addresses)} address candidate(s)"
+                f"detected {len(discovered_addresses)} address candidate(s), and {len(contact_leads)} contact lead(s)"
             ),
         }
     )
@@ -332,6 +471,7 @@ def scrape_website(url: str | None, max_snippets: int = 30, max_pages: int = 10)
         text=combined_text.lower(),
         snippets=snippets,
         discovered_addresses=discovered_addresses,
+        contact_leads=contact_leads,
         weighted_texts=weighted_texts,
         source_log=source_log,
     )

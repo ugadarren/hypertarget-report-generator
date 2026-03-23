@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import os
 import re
+from copy import deepcopy
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
@@ -22,10 +23,87 @@ ARCGIS_VIEWER_URL = os.getenv(
 )
 _COUNTY_FIPS_CACHE: dict[str, str] = {}
 
+DEFAULT_CREDIT_POLICY = {
+    "jtc": {
+        "base_threshold_by_tier": {"1": "+2", "2": "+10", "3": "+15", "4": "+25"},
+        "base_amount_by_tier": {
+            "1": "$3,500/yr for 5 years",
+            "2": "$3,000/yr for 5 years",
+            "3": "$1,250/yr for 5 years",
+            "4": "$750/yr for 5 years",
+        },
+        "special_amount_by_tier": {
+            "1": "$4,000/yr for 5 years",
+            "2": "$3,500/yr for 5 years",
+            "3": "$2,500/yr for 5 years",
+            "4": "$1,750/yr for 5 years",
+        },
+        "special_threshold_by_designation": {
+            "military_zone": "+2",
+            "opportunity_zone": "+2",
+            "tier1_lower_40": "+2",
+            "ldct": "+5",
+        },
+        "tier1_lower_40_amount": "$3,500/yr for 5 years",
+    },
+    "itc": {
+        "pct_by_tier": {
+            "1": "5%",
+            "2": "3%",
+            "3": "3%",
+            "4": "1%",
+        }
+    },
+}
+
 
 def load_county_tiers(path: Path) -> dict[str, str]:
     data = json.loads(path.read_text())
     return {_normalize_county_key(k): str(v) for k, v in data.items()}
+
+
+def load_county_tier_history(path: Path) -> dict[str, dict[str, str]]:
+    if not path.exists():
+        return {}
+    try:
+        data = json.loads(path.read_text())
+    except Exception:
+        return {}
+    if not isinstance(data, dict):
+        return {}
+    output: dict[str, dict[str, str]] = {}
+    for year, mapping in data.items():
+        if not isinstance(mapping, dict):
+            continue
+        normalized_year = str(year).strip()
+        output[normalized_year] = {}
+        for county, tier in mapping.items():
+            county_key = _normalize_county_key(str(county))
+            if county_key:
+                output[normalized_year][county_key] = str(tier).strip()
+    return output
+
+
+def _deep_merge(base: dict, override: dict) -> dict:
+    merged = deepcopy(base)
+    for key, value in override.items():
+        if isinstance(value, dict) and isinstance(merged.get(key), dict):
+            merged[key] = _deep_merge(merged[key], value)
+        else:
+            merged[key] = value
+    return merged
+
+
+def load_credit_policy(path: Path) -> dict:
+    if not path.exists():
+        return deepcopy(DEFAULT_CREDIT_POLICY)
+    try:
+        data = json.loads(path.read_text())
+        if not isinstance(data, dict):
+            return deepcopy(DEFAULT_CREDIT_POLICY)
+        return _deep_merge(DEFAULT_CREDIT_POLICY, data)
+    except Exception:
+        return deepcopy(DEFAULT_CREDIT_POLICY)
 
 
 def _normalize_county_key(value: str) -> str:
@@ -400,6 +478,42 @@ def _display_tier_label(tier_value: str | None, tier_label_raw: str | None, tier
     return raw or None
 
 
+def _history_tier_label(raw_tier: str) -> str:
+    tier = _normalize_tier_value(raw_tier)
+    raw_l = str(raw_tier).lower()
+    if "lower 40" in raw_l or "bottom 40" in raw_l:
+        return "Tier 1 Lower 40"
+    if tier in {"1", "2", "3", "4"}:
+        return f"Tier {tier}"
+    return str(raw_tier)
+
+
+def _build_tier_history(
+    county: str | None,
+    tier_history_by_year: dict[str, dict[str, str]] | None,
+    reference_year: int | None,
+    years_back: int = 5,
+) -> list[str]:
+    if not county or not tier_history_by_year:
+        return []
+    county_key = _normalize_county_key(county)
+    year_values: list[int] = []
+    for year in tier_history_by_year.keys():
+        if str(year).isdigit():
+            year_values.append(int(year))
+    if not year_values:
+        return []
+    ref = reference_year if reference_year is not None else max(year_values)
+    selected = sorted([y for y in year_values if y <= ref], reverse=True)[: years_back + 1]
+    history: list[str] = []
+    for year in selected:
+        tier_raw = tier_history_by_year.get(str(year), {}).get(county_key)
+        if not tier_raw:
+            continue
+        history.append(f"{year}: {_history_tier_label(tier_raw)}")
+    return history
+
+
 def _county_from_address_text(address_text: str, tier_map: dict[str, str]) -> str | None:
     lower_text = address_text.lower()
     for county_key in tier_map.keys():
@@ -458,10 +572,11 @@ def _estimate_jtc_benefit(
     ldct: bool | None,
     opportunity_zone: bool | None,
     tier1_lower_40: bool | None,
+    credit_policy: dict | None = None,
 ) -> tuple[str, str]:
-    # Deterministic tier-based draft used for report generation.
+    policy = credit_policy or DEFAULT_CREDIT_POLICY
+    jtc = policy.get("jtc", {})
     has_special_amount = any([military_zone, ldct, opportunity_zone, tier1_lower_40])
-    special_threshold = "+2" if any([military_zone, opportunity_zone, tier1_lower_40]) else "+5"
     if not tier_value:
         return ("Unavailable", "Unavailable")
     normalized = "".join(ch for ch in str(tier_value) if ch.isdigit())
@@ -469,55 +584,60 @@ def _estimate_jtc_benefit(
     if not tier_num:
         return ("Unavailable", "Unavailable")
 
-    base_threshold_by_tier = {
-        1: "+2",
-        2: "+10",
-        3: "+15",
-        4: "+25",
-    }
-    base_amount_by_tier = {
-        1: "$3,500/yr for 5 years",
-        2: "$3,000/yr for 5 years",
-        3: "$1,250/yr for 5 years",
-        4: "$750/yr for 5 years",
-    }
+    base_threshold_by_tier = jtc.get("base_threshold_by_tier", {})
+    base_amount_by_tier = jtc.get("base_amount_by_tier", {})
 
     if has_special_amount:
-        amount_by_tier = {
-            1: "$4000/yr for 5 years",
-            2: "$3500/yr for 5 years",
-            3: "$2500/yr for 5 years",
-            4: "$1750/yr for 5 years",
-        }
-        special_amount = amount_by_tier.get(tier_num, "Unavailable")
+        amount_by_tier = jtc.get("special_amount_by_tier", {})
+        threshold_by_designation = jtc.get("special_threshold_by_designation", {})
+        threshold_candidates: list[str] = []
+        if military_zone:
+            threshold_candidates.append(str(threshold_by_designation.get("military_zone", "")))
+        if opportunity_zone:
+            threshold_candidates.append(str(threshold_by_designation.get("opportunity_zone", "")))
+        if tier1_lower_40:
+            threshold_candidates.append(str(threshold_by_designation.get("tier1_lower_40", "")))
+        if ldct:
+            threshold_candidates.append(str(threshold_by_designation.get("ldct", "")))
+        threshold_candidates = [item for item in threshold_candidates if item]
+        if threshold_candidates:
+            special_threshold = min(
+                threshold_candidates,
+                key=lambda t: int("".join(ch for ch in t if ch.isdigit()) or "999"),
+            )
+        else:
+            special_threshold = "+2"
+
+        special_amount = amount_by_tier.get(str(tier_num), "Unavailable")
         if tier_num == 1 and tier1_lower_40 and not military_zone and not opportunity_zone:
-            special_amount = "$3500/yr for 5 years"
+            special_amount = jtc.get("tier1_lower_40_amount", "$3,500/yr for 5 years")
         return (special_threshold, special_amount)
 
     return (
-        base_threshold_by_tier.get(tier_num, "Unavailable"),
-        base_amount_by_tier.get(tier_num, "Unavailable"),
+        base_threshold_by_tier.get(str(tier_num), "Unavailable"),
+        base_amount_by_tier.get(str(tier_num), "Unavailable"),
     )
 
 
-def _investment_credit_pct_for_tier(tier_value: str | None) -> str | None:
+def _investment_credit_pct_for_tier(tier_value: str | None, credit_policy: dict | None = None) -> str | None:
+    policy = credit_policy or DEFAULT_CREDIT_POLICY
     if not tier_value:
         return None
     normalized = "".join(ch for ch in str(tier_value) if ch.isdigit())
     if not normalized:
         return None
     tier_num = int(normalized)
-    # Tier-based draft percentages for GA Investment Tax Credit.
-    percentages = {
-        1: "5%",
-        2: "3%",
-        3: "3%",
-        4: "1%",
-    }
-    return percentages.get(tier_num)
+    percentages = policy.get("itc", {}).get("pct_by_tier", {})
+    return percentages.get(str(tier_num))
 
 
-def assess_locations(addresses: list[AddressInput], tier_map: dict[str, str]) -> list[LocationAssessment]:
+def assess_locations(
+    addresses: list[AddressInput],
+    tier_map: dict[str, str],
+    credit_policy: dict | None = None,
+    tier_history_by_year: dict[str, dict[str, str]] | None = None,
+    reference_year: int | None = None,
+) -> list[LocationAssessment]:
     results: list[LocationAssessment] = []
     arcgis = ArcGISIncentiveLookup()
 
@@ -624,6 +744,12 @@ def assess_locations(addresses: list[AddressInput], tier_map: dict[str, str]) ->
 
         confidence = 0.92 if county and state else 0.6
         tier_label = _display_tier_label(tier, tier_label_raw, tier1_lower_40)
+        tier_history = _build_tier_history(
+            county=county,
+            tier_history_by_year=tier_history_by_year,
+            reference_year=reference_year,
+            years_back=5,
+        )
 
         threshold, credit_amount = _estimate_jtc_benefit(
             tier,
@@ -631,6 +757,7 @@ def assess_locations(addresses: list[AddressInput], tier_map: dict[str, str]) ->
             ldct,
             opportunity_zone,
             tier1_lower_40,
+            credit_policy=credit_policy,
         )
 
         results.append(
@@ -654,7 +781,8 @@ def assess_locations(addresses: list[AddressInput], tier_map: dict[str, str]) ->
                 ),
                 job_creation_threshold=threshold,
                 per_job_credit_amount=credit_amount,
-                investment_tax_credit_pct=_investment_credit_pct_for_tier(tier),
+                investment_tax_credit_pct=_investment_credit_pct_for_tier(tier, credit_policy=credit_policy),
+                tier_history=tier_history,
                 zone_details={**zone_details, "_diagnostics": diagnostics},
                 confidence=confidence,
                 evidence=evidence,

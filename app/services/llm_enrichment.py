@@ -1,17 +1,13 @@
 from __future__ import annotations
 
 import json
-import os
 from typing import Any
 
 import httpx
 
+from app.config import get_settings
 from app.data.industry_profiles import SECTOR_DETAILS
 from app.models import SectorProfile
-
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "").strip()
-OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4.1-mini").strip()
-OPENAI_TIMEOUT = float(os.getenv("OPENAI_TIMEOUT_SECONDS", "45"))
 
 
 def _clip(text: str, max_chars: int) -> str:
@@ -69,6 +65,32 @@ def _normalize_rd_row(row: dict[str, Any]) -> dict[str, Any] | None:
     }
 
 
+def _normalize_contact_row(row: dict[str, Any]) -> dict[str, Any] | None:
+    name = str(row.get("name", "") or "").strip() or None
+    title = str(row.get("title", "") or "").strip() or None
+    email = str(row.get("email", "") or "").strip() or None
+    source_url = str(row.get("source_url", "") or "").strip() or None
+    notes = str(row.get("notes", "") or "").strip() or None
+    try:
+        confidence = float(row.get("confidence", 0.0))
+    except Exception:
+        confidence = 0.0
+    confidence = max(0.0, min(1.0, confidence))
+
+    if not name and not email:
+        return None
+    if email and "@" not in email:
+        email = None
+    return {
+        "name": name,
+        "title": title,
+        "email": email,
+        "confidence": confidence,
+        "source_url": source_url,
+        "notes": notes,
+    }
+
+
 def _build_rd_rows(examples: list[str]) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     for idx, chunk_start in enumerate(range(0, min(len(examples), 8), 2)):
@@ -107,20 +129,20 @@ def _response_output_text(data: dict[str, Any]) -> str:
     return "\n".join(chunks)
 
 
-def _post_openai(prompt: str, system_prompt: str) -> tuple[dict[str, Any] | None, str | None]:
+def _post_openai(prompt: str, system_prompt: str, model: str, api_key: str, timeout_seconds: float) -> tuple[dict[str, Any] | None, str | None]:
     payload = {
-        "model": OPENAI_MODEL,
+        "model": model,
         "input": [
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": prompt},
         ],
     }
     try:
-        with httpx.Client(timeout=OPENAI_TIMEOUT) as client:
+        with httpx.Client(timeout=timeout_seconds) as client:
             response = client.post(
                 "https://api.openai.com/v1/responses",
                 headers={
-                    "Authorization": f"Bearer {OPENAI_API_KEY}",
+                    "Authorization": f"Bearer {api_key}",
                     "Content-Type": "application/json",
                 },
                 json=payload,
@@ -138,7 +160,8 @@ def detect_sector_with_llm(
     snippets: list[str],
     research_text: str,
 ) -> tuple[dict[str, str] | None, dict[str, str]]:
-    if not OPENAI_API_KEY:
+    settings = get_settings()
+    if not settings.gpt_enabled:
         return None, {
             "source": "openai",
             "type": "llm",
@@ -167,7 +190,13 @@ Return JSON only:
   "reason": "1-2 sentence rationale"
 }}
 """
-    data, err = _post_openai(prompt, "You are an industry classification analyst. Output valid JSON only.")
+    data, err = _post_openai(
+        prompt,
+        "You are an industry classification analyst. Output valid JSON only.",
+        model=settings.openai_model,
+        api_key=settings.openai_api_key,
+        timeout_seconds=settings.openai_timeout_seconds,
+    )
     if err or not data:
         return None, {"source": "openai", "type": "llm_error", "detail": f"LLM sector detection failed: {err or 'unknown'}"}
 
@@ -196,9 +225,10 @@ def enrich_sector_profile(
     snippets: list[str],
     research_text: str,
 ) -> tuple[SectorProfile | None, dict[str, str]]:
+    settings = get_settings()
     default_rd_feasibility, default_rd_conf = _rd_default_by_sector(base_sector.sector_key)
 
-    if not OPENAI_API_KEY:
+    if not settings.gpt_enabled:
         fallback_data = base_sector.model_dump()
         fallback_data["rd_feasibility"] = base_sector.rd_feasibility or default_rd_feasibility
         fallback_data["rd_confidence"] = base_sector.rd_confidence or default_rd_conf
@@ -259,7 +289,13 @@ Rules:
 - For rd_rows, include at least 3 and at most 4 categories.
 - Keep descriptions client-facing and specific to the company.
 """
-    data, err = _post_openai(prompt, "You are a precise tax-credit analyst. Output valid JSON only.")
+    data, err = _post_openai(
+        prompt,
+        "You are a precise tax-credit analyst. Output valid JSON only.",
+        model=settings.openai_model,
+        api_key=settings.openai_api_key,
+        timeout_seconds=settings.openai_timeout_seconds,
+    )
     if err or not data:
         return None, {"source": "openai", "type": "llm_error", "detail": f"LLM enrichment failed: {err or 'unknown'}"}
 
@@ -315,7 +351,7 @@ Rules:
         equipment=equipment or base_sector.equipment,
         evidence=list(base_sector.evidence)
         + [
-            f"LLM-enriched using model {OPENAI_MODEL}",
+            f"LLM-enriched using model {settings.openai_model}",
             f"Website: {website or 'n/a'}",
             f"Selected sector: {sector_context}",
         ],
@@ -324,5 +360,96 @@ Rules:
     return enriched, {
         "source": "openai",
         "type": "llm",
-        "detail": f"Applied GPT enrichment ({OPENAI_MODEL}) for sector narrative, retraining, and R&D feasibility scoring.",
+        "detail": (
+            f"Applied GPT enrichment ({settings.openai_model}) for sector narrative, retraining, "
+            "and R&D feasibility scoring."
+        ),
+    }
+
+
+def extract_contacts_with_llm(
+    *,
+    company_name: str,
+    website: str | None,
+    snippets: list[str],
+    research_text: str,
+    deterministic_contacts: list[dict[str, Any]] | None = None,
+) -> tuple[list[dict[str, Any]] | None, dict[str, str]]:
+    settings = get_settings()
+    if not settings.gpt_enabled:
+        return None, {
+            "source": "openai",
+            "type": "llm",
+            "detail": "OPENAI_API_KEY not configured; used deterministic contact extraction.",
+        }
+
+    prompt = f"""
+Identify likely owner/decision-maker contact leads from public website evidence.
+Do not invent people or emails. Use only evidence in provided text/snippets.
+
+Company: {company_name}
+Website: {website or "Not provided"}
+
+Deterministic contact candidates:
+{json.dumps(deterministic_contacts or [], ensure_ascii=True)}
+
+Website snippets:
+{_clip(chr(10).join(snippets[:25]), 12000)}
+
+Additional text:
+{_clip(research_text, 12000)}
+
+Return JSON only:
+{{
+  "contacts": [
+    {{
+      "name": "full name or null",
+      "title": "role/title or null",
+      "email": "public email or null",
+      "confidence": 0.0,
+      "source_url": "best source page url if known, else null",
+      "notes": "short verification note"
+    }}
+  ]
+}}
+
+Rules:
+- Return 0 to 5 contacts.
+- Prefer owner/founder/CEO/president/managing partner.
+- If no leadership contact exists, you may include one general contact email.
+- Confidence should be conservative; avoid values above 0.85 unless evidence is explicit.
+"""
+    data, err = _post_openai(
+        prompt,
+        "You are a cautious B2B contact researcher. Output valid JSON only and never hallucinate contact details.",
+        model=settings.openai_model,
+        api_key=settings.openai_api_key,
+        timeout_seconds=settings.openai_timeout_seconds,
+    )
+    if err or not data:
+        return None, {
+            "source": "openai",
+            "type": "llm_error",
+            "detail": f"LLM contact extraction failed: {err or 'unknown'}",
+        }
+
+    parsed = _extract_json(_response_output_text(data))
+    if not parsed:
+        return None, {
+            "source": "openai",
+            "type": "llm_error",
+            "detail": "LLM contact extraction returned non-JSON output.",
+        }
+
+    contacts: list[dict[str, Any]] = []
+    for raw in parsed.get("contacts", []):
+        if isinstance(raw, dict):
+            normalized = _normalize_contact_row(raw)
+            if normalized:
+                contacts.append(normalized)
+    contacts = contacts[:5]
+    return contacts, {
+        "source": "openai",
+        "type": "llm",
+        "detail": f"Applied GPT contact extraction ({settings.openai_model}) from public website evidence.",
     }

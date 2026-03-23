@@ -125,12 +125,36 @@ Sector correction capture:
 ## Data notes
 
 - County tiers are read from `app/data/ga_county_tiers.json`.
+- JTC/ITC credit values are read from `app/data/ga_credit_policy.json` (update this yearly).
+- Policy version metadata is read from `app/data/policy_versions.json` and shown in report output.
+- Multi-year county tiers are read from `app/data/ga_county_tiers_by_year.json` for current + prior 5-year reference in reports.
 - Refresh this file each year from the Georgia DCA county ranking memo.
 - If you have a CSV source, place it at `app/data/ga_county_tiers_source.csv` with columns `county,tier` and run:
 
 ```bash
 python scripts/import_ga_tiers.py
 ```
+
+### Yearly update from CSV (recommended)
+
+1. Put county tier history CSV at:
+   - `app/data/ga_county_tiers_history_source.csv`
+   - Required columns: `county,year,tier`
+2. Put credit policy CSV at:
+   - `app/data/ga_credit_policy_source.csv`
+   - Required columns: `program,category,tier_or_designation,value`
+3. Run one command:
+
+```bash
+bash scripts/update_policy_data.sh 2026
+```
+
+This updates:
+- `app/data/ga_county_tiers.json` (current year only)
+- `app/data/ga_county_tiers_by_year.json` (all years)
+- `app/data/ga_credit_policy.json`
+
+Then update `app/data/policy_versions.json` to match the effective year/source metadata.
 
 ## Important
 

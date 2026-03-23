@@ -6,9 +6,10 @@ from pathlib import Path
 from uuid import uuid4
 
 from app.models import CompanyInput, Report
-from app.services.llm_enrichment import detect_sector_with_llm, enrich_sector_profile
-from app.services.location import assess_locations, load_county_tiers
+from app.services.llm_enrichment import detect_sector_with_llm, enrich_sector_profile, extract_contacts_with_llm
+from app.services.location import assess_locations, load_county_tiers, load_county_tier_history, load_credit_policy
 from app.services.opportunity_engine import build_credit_assessments
+from app.services.policy_meta import load_policy_versions
 from app.services.sector import infer_sector_from_text, resolve_sector_from_input
 from app.services.web_research import scrape_website
 
@@ -118,11 +119,27 @@ class ReportService:
         self.reports_dir = reports_dir
         self.reports_dir.mkdir(parents=True, exist_ok=True)
 
-    def generate(self, payload: CompanyInput) -> Report:
+    def _load_tier_map(self) -> dict[str, str]:
         tier_map_path = self.data_dir / "ga_county_tiers.json"
-        tier_map = load_county_tiers(tier_map_path)
+        return load_county_tiers(tier_map_path)
 
+    def _load_tier_history_map(self) -> dict[str, dict[str, str]]:
+        history_path = self.data_dir / "ga_county_tiers_by_year.json"
+        return load_county_tier_history(history_path)
+
+    def _load_credit_policy(self) -> dict:
+        policy_path = self.data_dir / "ga_credit_policy.json"
+        return load_credit_policy(policy_path)
+
+    def _load_policy_versions(self) -> dict:
+        versions_path = self.data_dir / "policy_versions.json"
+        return load_policy_versions(versions_path)
+
+    def _collect_web_context(self, payload: CompanyInput):
         web = scrape_website(str(payload.website) if payload.website else None)
+        return web
+
+    def _resolve_sector(self, payload: CompanyInput, web):
         if payload.sector and payload.sector.strip():
             sector = resolve_sector_from_input(sector_input=payload.sector, company_name=payload.company_name)
             web.source_log.append(
@@ -159,6 +176,9 @@ class ReportService:
                         "detail": f"Applied keyword-based sector inference: {sector.sector}",
                     }
                 )
+        return sector
+
+    def _enrich_sector(self, payload: CompanyInput, web, sector):
         enriched_sector, enrichment_log = enrich_sector_profile(
             company_name=payload.company_name,
             website=str(payload.website) if payload.website else None,
@@ -170,6 +190,35 @@ class ReportService:
         if enriched_sector:
             sector = enriched_sector
         web.source_log.append(enrichment_log)
+        return sector
+
+    def _enrich_contacts(self, payload: CompanyInput, web) -> list[dict]:
+        base_contacts = list(web.contact_leads or [])
+        llm_contacts, llm_log = extract_contacts_with_llm(
+            company_name=payload.company_name,
+            website=str(payload.website) if payload.website else None,
+            snippets=web.snippets,
+            research_text=web.text,
+            deterministic_contacts=base_contacts,
+        )
+        web.source_log.append(llm_log)
+        merged: dict[str, dict] = {}
+        for contact in base_contacts + list(llm_contacts or []):
+            key = f"{str(contact.get('name') or '').strip().lower()}|{str(contact.get('email') or '').strip().lower()}"
+            existing = merged.get(key)
+            if not existing or float(contact.get("confidence") or 0) > float(existing.get("confidence") or 0):
+                merged[key] = contact
+        return sorted(merged.values(), key=lambda c: float(c.get("confidence") or 0), reverse=True)[:8]
+
+    def _resolve_locations(
+        self,
+        payload: CompanyInput,
+        web,
+        tier_map: dict[str, str],
+        credit_policy: dict,
+        tier_history_by_year: dict[str, dict[str, str]],
+        reference_year: int | None,
+    ):
         input_addresses = payload.addresses
         if not input_addresses:
             web.source_log.append(
@@ -179,21 +228,31 @@ class ReportService:
                     "detail": "No addresses were entered. Address processing is manual-only.",
                 }
             )
+        return assess_locations(
+            input_addresses,
+            tier_map,
+            credit_policy=credit_policy,
+            tier_history_by_year=tier_history_by_year,
+            reference_year=reference_year,
+        )
 
-        locations = assess_locations(input_addresses, tier_map)
+    def _assess_credits(self, sector, locations, payload: CompanyInput, web):
         credits, expansion_signals, property_signals = build_credit_assessments(
             sector=sector,
             locations=locations,
             research_text=web.text,
             notes=payload.notes,
         )
+        return credits, expansion_signals, property_signals
+
+    def _build_narrative(self, payload: CompanyInput, sector, credits, expansion_signals: list[str]) -> dict:
         ga_retraining = next((c for c in credits if c.code == "GA_RETRAINING"), None)
         federal_rd = next((c for c in credits if c.code == "FEDERAL_RD"), None)
         ga_investment = next((c for c in credits if c.code == "GA_INVESTMENT"), None)
         retraining_rows = _normalized_retraining_rows(sector)
         rd_rows = _normalized_rd_rows(sector)
 
-        narrative = {
+        return {
             "sector_title": sector.sector,
             "company_description": sector.company_description
             or f"{payload.company_name} appears to operate in the {sector.sector.lower()} industry.",
@@ -280,7 +339,19 @@ class ReportService:
             ),
         }
 
-        report = Report(
+    def _build_report(
+        self,
+        payload: CompanyInput,
+        sector,
+        locations,
+        credits,
+        expansion_signals,
+        property_signals,
+        contact_intelligence,
+        narrative: dict,
+        source_log: list[dict],
+    ) -> Report:
+        return Report(
             id=uuid4().hex[:12],
             created_at=datetime.now(timezone.utc),
             company_name=payload.company_name,
@@ -290,12 +361,65 @@ class ReportService:
             credits=credits,
             expansion_signals=expansion_signals,
             property_signals=property_signals,
+            contact_intelligence=contact_intelligence,
+            narrative=narrative,
+            source_log=source_log,
+        )
+
+    def _persist_report(self, report: Report) -> None:
+        output_path = self.reports_dir / f"{report.id}.json"
+        output_path.write_text(report.model_dump_json(indent=2))
+
+    def generate(self, payload: CompanyInput) -> Report:
+        tier_map = self._load_tier_map()
+        tier_history_map = self._load_tier_history_map()
+        credit_policy = self._load_credit_policy()
+        policy_versions = self._load_policy_versions()
+        policy_year_value = str(policy_versions.get("policy_year", "")).strip()
+        reference_year = int(policy_year_value) if policy_year_value.isdigit() else None
+        web = self._collect_web_context(payload)
+        sector = self._resolve_sector(payload, web)
+        sector = self._enrich_sector(payload, web, sector)
+        contact_intelligence = self._enrich_contacts(payload, web)
+        locations = self._resolve_locations(
+            payload,
+            web,
+            tier_map,
+            credit_policy,
+            tier_history_map,
+            reference_year,
+        )
+        credits, expansion_signals, property_signals = self._assess_credits(sector, locations, payload, web)
+        narrative = self._build_narrative(payload, sector, credits, expansion_signals)
+        narrative["contact_intro"] = (
+            "The contacts below were identified from publicly available website content and may include owner, "
+            "founder, executive, or general decision-maker signals. Please verify title and email accuracy before outreach."
+        )
+        narrative["policy_year"] = policy_versions.get("policy_year", "unspecified")
+        narrative["policy_versions"] = policy_versions
+        web.source_log.append(
+            {
+                "source": "policy",
+                "type": "version",
+                "detail": (
+                    f"Policy year {policy_versions.get('policy_year', 'unspecified')}; "
+                    f"County tiers: {policy_versions.get('county_tiers', {}).get('effective_year', 'unspecified')}; "
+                    f"Credit policy: {policy_versions.get('credit_policy', {}).get('effective_year', 'unspecified')}"
+                ),
+            }
+        )
+        report = self._build_report(
+            payload=payload,
+            sector=sector,
+            locations=locations,
+            credits=credits,
+            expansion_signals=expansion_signals,
+            property_signals=property_signals,
+            contact_intelligence=contact_intelligence,
             narrative=narrative,
             source_log=web.source_log,
         )
-
-        output_path = self.reports_dir / f"{report.id}.json"
-        output_path.write_text(report.model_dump_json(indent=2))
+        self._persist_report(report)
         return report
 
     def get_report(self, report_id: str) -> Report | None:

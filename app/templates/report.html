@@ -10,7 +10,13 @@
     <main class="container report-doc">
       <header>
         <h1>{{ report.company_name }} Tax Incentive Summary</h1>
-        <p><a class="button-link" href="/reports/{{ report.id }}/download/docx">Download Microsoft Word (.docx)</a></p>
+        <form class="download-controls" action="/reports/{{ report.id }}/download/docx" method="get">
+          <label class="download-toggle">
+            <input type="checkbox" name="include_confidence" value="true" />
+            Include confidence scoring in Word export
+          </label>
+          <button type="submit" class="button-link">Download Microsoft Word (.docx)</button>
+        </form>
       </header>
 
       <section class="doc-section">
@@ -21,6 +27,44 @@
       </section>
 
       <section class="doc-section">
+        <h2>Contact Intelligence (Public Sources)</h2>
+        <p>{{ report.narrative.get('contact_intro', '') }}</p>
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Title</th>
+              <th>Email</th>
+              <th>Confidence</th>
+              <th>Source</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% if not report.contact_intelligence %}
+            <tr>
+              <td colspan="5">No owner or decision-maker signals were found on public website pages.</td>
+            </tr>
+            {% endif %}
+            {% for c in report.contact_intelligence %}
+            <tr>
+              <td>{{ c.name or '-' }}</td>
+              <td>{{ c.title or '-' }}</td>
+              <td>{{ c.email or '-' }}</td>
+              <td>{{ (c.confidence * 100)|round|int }}%</td>
+              <td>
+                {% if c.source_url %}
+                <a href="{{ c.source_url }}" target="_blank" rel="noopener noreferrer">{{ c.source_url }}</a>
+                {% else %}
+                -
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </section>
+
+      <section class="doc-section credit-section jtc-section">
         <h2>GA Job Tax Credit</h2>
         <p>{{ report.narrative.get('ga_jtc_intro', '') }}</p>
         <p>{{ report.narrative.get('ga_jtc_note', '') }}</p>
@@ -54,9 +98,17 @@
             {% endfor %}
           </tbody>
         </table>
+
+        {% set ns = namespace(items=[]) %}
+        {% for loc in report.locations %}
+          {% if loc.tier_history and (loc.tier_history|length) > 1 %}
+            {% set ns.items = ns.items + [loc.tier_history[1:]|join(' | ')] %}
+          {% endif %}
+        {% endfor %}
+        <p><strong>Prior Year Tier History:</strong> {{ ns.items|join(' || ') if ns.items else 'Unavailable' }}</p>
       </section>
 
-      <section class="doc-section">
+      <section class="doc-section credit-section rtc-section">
         <h2>Georgia Retraining Tax Credit</h2>
         <p>
           {{ report.narrative.get('retraining_intro_lead', report.narrative.get('retraining_intro', '')) }}
@@ -102,7 +154,7 @@
         </table>
       </section>
 
-      <section class="doc-section">
+      <section class="doc-section credit-section rd-section">
         <h2>Federal &amp; State Research and Development Credit</h2>
         <p>{{ report.narrative.get('rd_intro', '') }}</p>
         <p>{{ report.narrative.get('rd_examples_intro', '') }}</p>
@@ -151,7 +203,7 @@
         </table>
       </section>
 
-      <section class="doc-section">
+      <section class="doc-section credit-section itc-section">
         <h2>Georgia Investment Tax Credit</h2>
         <p>{{ report.narrative.get('investment_intro', '') }}</p>
         <p>{{ report.narrative.get('investment_note', '') }}</p>
@@ -201,6 +253,21 @@
         <h2>Cost Segregation</h2>
         <p>{{ report.narrative.get('costseg_intro', '') }}</p>
         <p>{{ report.narrative.get('costseg_note', '') }}</p>
+      </section>
+
+      <section class="doc-section subtle">
+        <h3>Policy Version</h3>
+        <p><strong>Policy Year:</strong> {{ report.narrative.get('policy_year', 'unspecified') }}</p>
+        <p>
+          <strong>County Tier Source:</strong>
+          {{ report.narrative.get('policy_versions', {}).get('county_tiers', {}).get('source', 'app/data/ga_county_tiers.json') }}
+          ({{ report.narrative.get('policy_versions', {}).get('county_tiers', {}).get('effective_year', 'unspecified') }})
+        </p>
+        <p>
+          <strong>Credit Policy Source:</strong>
+          {{ report.narrative.get('policy_versions', {}).get('credit_policy', {}).get('source', 'app/data/ga_credit_policy.json') }}
+          ({{ report.narrative.get('policy_versions', {}).get('credit_policy', {}).get('effective_year', 'unspecified') }})
+        </p>
       </section>
 
       <section class="doc-section subtle">

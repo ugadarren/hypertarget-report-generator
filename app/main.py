@@ -12,6 +12,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from app.models import AddressInput, CompanyInput, GenerateResponse, SectorCorrectionInput
+from app.config import get_settings
 from app.services.designation_map import ArcGISDesignationService
 from app.services.feedback_service import FeedbackService
 from app.services.report_service import ReportService
@@ -27,14 +28,12 @@ app = FastAPI(title="HyperTarget Incentive Report Generator", version="0.1.0")
 app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 
-APP_USERNAME = os.getenv("APP_USERNAME", "").strip()
-APP_PASSWORD = os.getenv("APP_PASSWORD", "").strip()
-
 
 @app.middleware("http")
 async def basic_auth_guard(request: Request, call_next):
+    settings = get_settings()
     # Enable protection only when both values are configured.
-    if not APP_USERNAME or not APP_PASSWORD:
+    if not settings.auth_enabled:
         return await call_next(request)
 
     auth = request.headers.get("Authorization", "")
@@ -58,7 +57,10 @@ async def basic_auth_guard(request: Request, call_next):
             headers={"WWW-Authenticate": 'Basic realm="HyperTarget"'},
         )
 
-    if not (secrets.compare_digest(username, APP_USERNAME) and secrets.compare_digest(password, APP_PASSWORD)):
+    if not (
+        secrets.compare_digest(username, settings.app_username)
+        and secrets.compare_digest(password, settings.app_password)
+    ):
         return Response(
             content="Invalid credentials",
             status_code=401,
@@ -71,6 +73,22 @@ async def basic_auth_guard(request: Request, call_next):
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
+
+
+@app.get("/healthz")
+async def healthz():
+    return {"status": "ok"}
+
+
+@app.get("/status")
+async def status():
+    settings = get_settings()
+    return {
+        "auth_enabled": settings.auth_enabled,
+        "gpt_enabled": settings.gpt_enabled,
+        "openai_model": settings.openai_model,
+        "arcgis_viewer_url": settings.arcgis_viewer_url,
+    }
 
 
 @app.get("/admin/exports", response_class=HTMLResponse)
@@ -207,12 +225,12 @@ async def designations(
 
 
 @app.get("/reports/{report_id}/download/docx")
-async def download_report_docx(report_id: str):
+async def download_report_docx(report_id: str, include_confidence: bool = False):
     report = service.get_report(report_id)
     if not report:
         raise HTTPException(status_code=404, detail="Report not found")
     try:
-        output_path = word_export.export_report(report)
+        output_path = word_export.export_report(report, include_confidence=include_confidence)
     except RuntimeError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
     return FileResponse(

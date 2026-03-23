@@ -131,7 +131,7 @@ class WordExportService:
                     self._set_cell_shading(cell, "F4F7FB", OxmlElement, qn)
         self._add_paragraph_break(document)
 
-    def _build_document(self, report: Report):
+    def _build_document(self, report: Report, include_confidence: bool = False):
         deps = self._docx_imports()
         Document = deps["Document"]
         WD_ALIGN_PARAGRAPH = deps["WD_ALIGN_PARAGRAPH"]
@@ -155,13 +155,41 @@ class WordExportService:
         self._add_paragraph_break(document)
         self._add_paragraph(document, report.narrative.get("sector_summary", ""))
 
+        self._add_section_heading(document, "Contact Intelligence (Public Sources)")
+        self._add_paragraph(document, report.narrative.get("contact_intro", ""))
+        self._add_table(
+            document,
+            ["Name", "Title", "Email", "Confidence", "Source"],
+            [
+                [
+                    contact.name or "-",
+                    contact.title or "-",
+                    contact.email or "-",
+                    f"{round((contact.confidence or 0) * 100)}%",
+                    contact.source_url or "-",
+                ]
+                for contact in report.contact_intelligence
+            ],
+            OxmlElement,
+            qn,
+            RGBColor,
+            Pt,
+        )
+
         self._add_section_heading(document, "GA Job Tax Credit")
         self._add_paragraph(document, report.narrative.get("ga_jtc_intro", ""))
         self._add_paragraph_break(document)
         self._add_paragraph(document, report.narrative.get("ga_jtc_note", ""))
         self._add_table(
             document,
-            ["GA Location", "County", "County Tier", "Special Designation", "Job Creation Threshold", "Per Job Credit Amount"],
+            [
+                "GA Location",
+                "County",
+                "County Tier",
+                "Special Designation",
+                "Job Creation Threshold",
+                "Per Job Credit Amount",
+            ],
             [
                 [
                     loc.address,
@@ -178,6 +206,15 @@ class WordExportService:
             RGBColor,
             Pt,
         )
+        prior_histories = [
+            " | ".join(loc.tier_history[1:])
+            for loc in report.locations
+            if len(loc.tier_history) > 1
+        ]
+        self._add_paragraph(
+            document,
+            f"Prior Year Tier History: {' || '.join(prior_histories) if prior_histories else 'Unavailable'}",
+        )
 
         self._add_section_heading(document, "Georgia Retraining Tax Credit")
         intro_lead = str(report.narrative.get("retraining_intro_lead", ""))
@@ -189,6 +226,22 @@ class WordExportService:
             self._add_paragraph(document, report.narrative.get("retraining_intro", ""))
         self._add_paragraph_break(document)
         self._add_paragraph(document, report.narrative.get("retraining_context", ""))
+        if include_confidence:
+            self._add_table(
+                document,
+                ["Retraining Feasibility", "Confidence Score", "Rationale"],
+                [
+                    [
+                        report.narrative.get("retraining_feasibility", "Possible"),
+                        f"{report.narrative.get('retraining_confidence_pct', 0)}%",
+                        report.narrative.get("retraining_rationale", ""),
+                    ]
+                ],
+                OxmlElement,
+                qn,
+                RGBColor,
+                Pt,
+            )
         self._add_table(
             document,
             ["Type", "Category", "Applicable Programs / Systems"],
@@ -210,6 +263,22 @@ class WordExportService:
         self._add_paragraph(document, report.narrative.get("rd_intro", ""))
         self._add_paragraph_break(document)
         self._add_paragraph(document, report.narrative.get("rd_examples_intro", ""))
+        if include_confidence:
+            self._add_table(
+                document,
+                ["R&D Feasibility", "Confidence Score", "Rationale"],
+                [
+                    [
+                        report.narrative.get("rd_feasibility", "Possible"),
+                        f"{report.narrative.get('rd_confidence_pct', 0)}%",
+                        report.narrative.get("rd_rationale", ""),
+                    ]
+                ],
+                OxmlElement,
+                qn,
+                RGBColor,
+                Pt,
+            )
         rd_rows = [
             [
                 "R&D Activity",
@@ -237,6 +306,22 @@ class WordExportService:
         self._add_paragraph(document, report.narrative.get("investment_intro", ""))
         self._add_paragraph_break(document)
         self._add_paragraph(document, report.narrative.get("investment_note", ""))
+        if include_confidence:
+            self._add_table(
+                document,
+                ["ITC Feasibility", "Confidence Score", "Rationale"],
+                [
+                    [
+                        str(report.narrative.get("investment_status", "possible")).title(),
+                        f"{report.narrative.get('investment_confidence_pct', 0)}%",
+                        report.narrative.get("investment_rationale", ""),
+                    ]
+                ],
+                OxmlElement,
+                qn,
+                RGBColor,
+                Pt,
+            )
         self._add_paragraph(document, str(report.narrative.get("investment_signals_summary", "")))
         self._add_table(
             document,
@@ -260,11 +345,30 @@ class WordExportService:
         self._add_paragraph_break(document)
         self._add_paragraph(document, report.narrative.get("costseg_note", ""))
 
+        self._add_section_heading(document, "Policy Version")
+        self._add_paragraph(document, f"Policy Year: {report.narrative.get('policy_year', 'unspecified')}")
+        county_meta = report.narrative.get("policy_versions", {}).get("county_tiers", {})
+        credit_meta = report.narrative.get("policy_versions", {}).get("credit_policy", {})
+        self._add_paragraph(
+            document,
+            (
+                f"County Tier Source: {county_meta.get('source', 'app/data/ga_county_tiers.json')} "
+                f"({county_meta.get('effective_year', 'unspecified')})"
+            ),
+        )
+        self._add_paragraph(
+            document,
+            (
+                f"Credit Policy Source: {credit_meta.get('source', 'app/data/ga_credit_policy.json')} "
+                f"({credit_meta.get('effective_year', 'unspecified')})"
+            ),
+        )
+
         return document
 
-    def export_report(self, report: Report) -> Path:
+    def export_report(self, report: Report, include_confidence: bool = False) -> Path:
         filename = f"{self._safe_slug(report.company_name)}_{report.id}.docx"
         output_path = self.exports_dir / filename
-        document = self._build_document(report)
+        document = self._build_document(report, include_confidence=include_confidence)
         document.save(output_path)
         return output_path
