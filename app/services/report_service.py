@@ -113,6 +113,41 @@ def _normalized_rd_rows(sector) -> list[dict]:
     return generated[:4]
 
 
+def _build_prior_tier_matrix(locations: list) -> tuple[list[str], list[dict]]:
+    year_values: set[int] = set()
+    address_maps: list[dict] = []
+
+    for loc in locations or []:
+        year_map: dict[str, str] = {}
+        for entry in list(loc.tier_history or [])[1:]:
+            parts = str(entry).split(":", 1)
+            if len(parts) != 2:
+                continue
+            year = parts[0].strip()
+            tier = parts[1].strip()
+            if not year.isdigit():
+                continue
+            year_values.add(int(year))
+            year_map[year] = tier
+        address_maps.append(
+            {
+                "address": loc.address,
+                "tiers_by_year": year_map,
+            }
+        )
+
+    years = [str(y) for y in sorted(year_values, reverse=True)]
+    rows: list[dict] = []
+    for item in address_maps:
+        rows.append(
+            {
+                "address": item["address"],
+                "tiers": [item["tiers_by_year"].get(year, "-") for year in years],
+            }
+        )
+    return years, rows
+
+
 class ReportService:
     def __init__(self, data_dir: Path, reports_dir: Path):
         self.data_dir = data_dir
@@ -245,12 +280,13 @@ class ReportService:
         )
         return credits, expansion_signals, property_signals
 
-    def _build_narrative(self, payload: CompanyInput, sector, credits, expansion_signals: list[str]) -> dict:
+    def _build_narrative(self, payload: CompanyInput, sector, credits, expansion_signals: list[str], locations) -> dict:
         ga_retraining = next((c for c in credits if c.code == "GA_RETRAINING"), None)
         federal_rd = next((c for c in credits if c.code == "FEDERAL_RD"), None)
         ga_investment = next((c for c in credits if c.code == "GA_INVESTMENT"), None)
         retraining_rows = _normalized_retraining_rows(sector)
         rd_rows = _normalized_rd_rows(sector)
+        prior_years, prior_rows = _build_prior_tier_matrix(locations)
 
         return {
             "sector_title": sector.sector,
@@ -268,6 +304,8 @@ class ReportService:
                 f"{payload.company_name}'s Georgia location(s) are listed below with their corresponding tier "
                 "designations and estimated credit benefits."
             ),
+            "ga_jtc_prior_years": prior_years,
+            "ga_jtc_prior_rows": prior_rows,
             "retraining_intro": (
                 "The Georgia RTC provides businesses with a tax credit of up to 50% of eligible training costs for "
                 "retraining existing employees to upgrade skills, adopt new technologies, or improve productivity. "
@@ -390,7 +428,7 @@ class ReportService:
             reference_year,
         )
         credits, expansion_signals, property_signals = self._assess_credits(sector, locations, payload, web)
-        narrative = self._build_narrative(payload, sector, credits, expansion_signals)
+        narrative = self._build_narrative(payload, sector, credits, expansion_signals, locations)
         narrative["contact_intro"] = (
             "The contacts below were identified from publicly available website content and may include owner, "
             "founder, executive, or general decision-maker signals. Please verify title and email accuracy before outreach."

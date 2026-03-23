@@ -26,7 +26,7 @@
         <p>{{ report.narrative.get('sector_summary', '') }}</p>
       </section>
 
-      <section class="doc-section">
+      <section class="doc-section credit-section">
         <h2>Contact Intelligence (Public Sources)</h2>
         <p>{{ report.narrative.get('contact_intro', '') }}</p>
         <table>
@@ -99,13 +99,33 @@
           </tbody>
         </table>
 
-        {% set ns = namespace(items=[]) %}
-        {% for loc in report.locations %}
-          {% if loc.tier_history and (loc.tier_history|length) > 1 %}
-            {% set ns.items = ns.items + [loc.tier_history[1:]|join(' | ')] %}
+        <details class="history-accordion">
+          <summary>Prior Year Tier History</summary>
+          {% if report.narrative.get('ga_jtc_prior_years') %}
+          <table>
+            <thead>
+              <tr>
+                <th>Address</th>
+                {% for year in report.narrative.get('ga_jtc_prior_years', []) %}
+                <th>{{ year }}</th>
+                {% endfor %}
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in report.narrative.get('ga_jtc_prior_rows', []) %}
+              <tr>
+                <td>{{ row.address }}</td>
+                {% for tier in row.tiers %}
+                <td>{{ tier }}</td>
+                {% endfor %}
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+          {% else %}
+          <p>No prior-year tier history available for the entered location(s).</p>
           {% endif %}
-        {% endfor %}
-        <p><strong>Prior Year Tier History:</strong> {{ ns.items|join(' || ') if ns.items else 'Unavailable' }}</p>
+        </details>
       </section>
 
       <section class="doc-section credit-section rtc-section">
