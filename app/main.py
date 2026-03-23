@@ -3,8 +3,10 @@ from __future__ import annotations
 import os
 from pathlib import Path
 from datetime import datetime
+import secrets
 
 from fastapi import FastAPI, Form, HTTPException, Request
+from fastapi.responses import Response
 from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -24,6 +26,46 @@ feedback_service = FeedbackService(reports_dir=BASE_DIR.parent / "reports")
 app = FastAPI(title="HyperTarget Incentive Report Generator", version="0.1.0")
 app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
+
+APP_USERNAME = os.getenv("APP_USERNAME", "").strip()
+APP_PASSWORD = os.getenv("APP_PASSWORD", "").strip()
+
+
+@app.middleware("http")
+async def basic_auth_guard(request: Request, call_next):
+    # Enable protection only when both values are configured.
+    if not APP_USERNAME or not APP_PASSWORD:
+        return await call_next(request)
+
+    auth = request.headers.get("Authorization", "")
+    if not auth.startswith("Basic "):
+        return Response(
+            content="Authentication required",
+            status_code=401,
+            headers={"WWW-Authenticate": 'Basic realm="HyperTarget"'},
+        )
+
+    try:
+        import base64
+
+        encoded = auth.split(" ", 1)[1].strip()
+        decoded = base64.b64decode(encoded).decode("utf-8")
+        username, password = decoded.split(":", 1)
+    except Exception:
+        return Response(
+            content="Invalid authentication header",
+            status_code=401,
+            headers={"WWW-Authenticate": 'Basic realm="HyperTarget"'},
+        )
+
+    if not (secrets.compare_digest(username, APP_USERNAME) and secrets.compare_digest(password, APP_PASSWORD)):
+        return Response(
+            content="Invalid credentials",
+            status_code=401,
+            headers={"WWW-Authenticate": 'Basic realm="HyperTarget"'},
+        )
+
+    return await call_next(request)
 
 
 @app.get("/", response_class=HTMLResponse)
