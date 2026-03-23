@@ -426,7 +426,8 @@ def _estimate_jtc_benefit(
     tier1_lower_40: bool | None,
 ) -> tuple[str, str]:
     # Deterministic tier-based draft used for report generation.
-    has_special = any([military_zone, ldct, opportunity_zone, tier1_lower_40])
+    has_special_amount = any([military_zone, ldct, opportunity_zone, tier1_lower_40])
+    special_threshold = "+2" if any([military_zone, opportunity_zone, tier1_lower_40]) else "+5"
     if not tier_value:
         return ("Unavailable", "Unavailable")
     normalized = "".join(ch for ch in str(tier_value) if ch.isdigit())
@@ -447,14 +448,14 @@ def _estimate_jtc_benefit(
         4: "$750/yr for 5 years",
     }
 
-    if has_special:
+    if has_special_amount:
         amount_by_tier = {
             1: "$4000/yr for 5 years",
             2: "$3500/yr for 5 years",
             3: "$2500/yr for 5 years",
             4: "$1750/yr for 5 years",
         }
-        return ("+2", amount_by_tier.get(tier_num, "Unavailable"))
+        return (special_threshold, amount_by_tier.get(tier_num, "Unavailable"))
 
     return (
         base_threshold_by_tier.get(tier_num, "Unavailable"),
