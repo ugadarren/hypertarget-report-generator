@@ -18,6 +18,7 @@ class LocationAssessment(BaseModel):
     latitude: float | None = None
     longitude: float | None = None
     ga_tier: str | None = None
+    ga_tier_label: str | None = None
     military_zone: bool | None = None
     ldct: bool | None = None
     opportunity_zone: bool | None = None

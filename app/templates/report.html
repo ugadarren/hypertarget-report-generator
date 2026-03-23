@@ -46,7 +46,7 @@
             <tr>
               <td>{{ loc.address }}</td>
               <td>{{ loc.county or '-' }}</td>
-              <td>{% if loc.ga_tier %}Tier {{ loc.ga_tier }}{% else %}Unmapped{% endif %}</td>
+              <td>{{ loc.ga_tier_label or 'Unmapped' }}</td>
               <td>{{ loc.special_designation or 'None' }}</td>
               <td>{{ loc.job_creation_threshold or 'Unavailable' }}</td>
               <td>{{ loc.per_job_credit_amount or 'Unavailable' }}</td>
@@ -189,7 +189,7 @@
             {% for loc in report.locations %}
             <tr>
               <td>{{ loc.county or '-' }}</td>
-              <td>{% if loc.ga_tier %}Tier {{ loc.ga_tier }}{% else %}Unmapped{% endif %}</td>
+              <td>{{ loc.ga_tier_label or 'Unmapped' }}</td>
               <td>{{ loc.investment_tax_credit_pct or 'Needs verification' }}</td>
             </tr>
             {% endfor %}

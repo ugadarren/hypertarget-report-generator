@@ -166,7 +166,7 @@ class WordExportService:
                 [
                     loc.address,
                     loc.county or "-",
-                    f"Tier {loc.ga_tier}" if loc.ga_tier else "Unmapped",
+                    loc.ga_tier_label or "Unmapped",
                     loc.special_designation or "None",
                     loc.job_creation_threshold or "Unavailable",
                     loc.per_job_credit_amount or "Unavailable",
@@ -244,7 +244,7 @@ class WordExportService:
             [
                 [
                     loc.county or "-",
-                    f"Tier {loc.ga_tier}" if loc.ga_tier else "Unmapped",
+                    loc.ga_tier_label or "Unmapped",
                     loc.investment_tax_credit_pct or "Needs verification",
                 ]
                 for loc in report.locations

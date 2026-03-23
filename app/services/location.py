@@ -277,6 +277,24 @@ def _extract_tier_from_attrs(attrs: dict[str, str]) -> str | None:
     return None
 
 
+def _extract_tier_label_from_attrs(attrs: dict[str, str]) -> str | None:
+    for key, value in attrs.items():
+        if value in (None, ""):
+            continue
+        key_l = str(key).lower()
+        val = str(value).strip()
+        if "tier" in key_l:
+            return val
+    for key, value in attrs.items():
+        if value in (None, ""):
+            continue
+        key_l = str(key).lower()
+        val = str(value).strip()
+        if "designation" in key_l and ("tier" in val.lower() or "lower 40" in val.lower() or "bottom 40" in val.lower()):
+            return val
+    return None
+
+
 def _extract_lower_40_from_attrs(attrs: dict[str, str]) -> bool | None:
     for key, value in attrs.items():
         if value in (None, ""):
@@ -356,6 +374,9 @@ def _normalize_tier_value(value: str | None) -> str | None:
     text = str(value).strip()
     if not text:
         return None
+    text_l = text.lower()
+    if "lower 40" in text_l or "lower40" in text_l or "bottom 40" in text_l or "bottom40" in text_l:
+        return "1"
     match = re.search(r"\b([1-4])\b", text)
     if match:
         return match.group(1)
@@ -364,6 +385,19 @@ def _normalize_tier_value(value: str | None) -> str | None:
         return digits
     lowered = text.lower().replace("tier", "").strip()
     return lowered or None
+
+
+def _display_tier_label(tier_value: str | None, tier_label_raw: str | None, tier1_lower_40: bool | None) -> str | None:
+    raw = (tier_label_raw or "").strip()
+    raw_l = raw.lower()
+    if raw and ("lower 40" in raw_l or "bottom 40" in raw_l):
+        return "Tier 1 Lower 40"
+    if tier1_lower_40:
+        return "Tier 1 Lower 40"
+    normalized = _normalize_tier_value(tier_value)
+    if normalized in {"1", "2", "3", "4"}:
+        return f"Tier {normalized}"
+    return raw or None
 
 
 def _county_from_address_text(address_text: str, tier_map: dict[str, str]) -> str | None:
@@ -524,6 +558,7 @@ def assess_locations(addresses: list[AddressInput], tier_map: dict[str, str]) ->
         lon = float(geo["lon"]) if geo.get("lon") else None
 
         tier = _tier_from_county(county, tier_map)
+        tier_label_raw = None
         military_zone = None
         ldct = None
         opportunity_zone = None
@@ -546,6 +581,7 @@ def assess_locations(addresses: list[AddressInput], tier_map: dict[str, str]) ->
 
             if zone_details.get("tier"):
                 tier = _extract_tier_from_attrs(zone_details["tier"]) or tier
+                tier_label_raw = _extract_tier_label_from_attrs(zone_details["tier"]) or tier_label_raw
                 lower_40 = _extract_lower_40_from_attrs(zone_details["tier"])
                 if lower_40 is not None:
                     tier1_lower_40 = lower_40
@@ -553,6 +589,8 @@ def assess_locations(addresses: list[AddressInput], tier_map: dict[str, str]) ->
                     county = _extract_county_from_attrs(zone_details["tier"]) or county
             if zone_details.get("tier1_lower_40"):
                 tier1_lower_40 = True
+                if not tier:
+                    tier = "1"
             if not county and zone_details.get("military_zone"):
                 county = _extract_county_from_attrs(zone_details["military_zone"]) or county
             if not county and zone_details.get("ldct"):
@@ -582,6 +620,7 @@ def assess_locations(addresses: list[AddressInput], tier_map: dict[str, str]) ->
             evidence.append("Address appears outside Georgia; GA tier may not apply")
 
         confidence = 0.92 if county and state else 0.6
+        tier_label = _display_tier_label(tier, tier_label_raw, tier1_lower_40)
 
         threshold, credit_amount = _estimate_jtc_benefit(
             tier,
@@ -599,6 +638,7 @@ def assess_locations(addresses: list[AddressInput], tier_map: dict[str, str]) ->
                 latitude=lat,
                 longitude=lon,
                 ga_tier=tier,
+                ga_tier_label=tier_label,
                 military_zone=military_zone,
                 ldct=ldct,
                 opportunity_zone=opportunity_zone,
