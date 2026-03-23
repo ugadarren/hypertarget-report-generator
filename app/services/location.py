@@ -489,7 +489,10 @@ def _estimate_jtc_benefit(
             3: "$2500/yr for 5 years",
             4: "$1750/yr for 5 years",
         }
-        return (special_threshold, amount_by_tier.get(tier_num, "Unavailable"))
+        special_amount = amount_by_tier.get(tier_num, "Unavailable")
+        if tier_num == 1 and tier1_lower_40 and not military_zone and not opportunity_zone:
+            special_amount = "$3500/yr for 5 years"
+        return (special_threshold, special_amount)
 
     return (
         base_threshold_by_tier.get(tier_num, "Unavailable"),
