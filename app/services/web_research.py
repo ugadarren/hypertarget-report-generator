@@ -3,26 +3,16 @@ from __future__ import annotations
 import json
 import re
 from dataclasses import dataclass
+from pathlib import Path
 from urllib.parse import parse_qs, unquote, urldefrag, urljoin, urlparse
 
 import requests
 from bs4 import BeautifulSoup
+from app.services.research_policy import load_research_policy
 
 USER_AGENT = "HyperTargetReportBot/1.0 (+https://localhost)"
-PAGE_TIMEOUT = 12
-
-PRIORITY_LINK_TERMS = [
-    "news",
-    "newsroom",
-    "press",
-    "media",
-    "about",
-    "locations",
-    "facility",
-    "facilities",
-    "expansion",
-    "investor",
-]
+DATA_DIR = Path(__file__).resolve().parents[1] / "data"
+RESEARCH_POLICY_PATH = DATA_DIR / "web_research_policy.json"
 EMAIL_PATTERN = re.compile(r"\b[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}\b")
 TITLE_PATTERNS = [
     re.compile(r"\b(Owner|Founder|Co[- ]Founder|CEO|President|Principal|Managing Partner)\b", re.IGNORECASE),
@@ -293,12 +283,12 @@ def _extract_weighted_fields(soup: BeautifulSoup) -> dict[str, str]:
     }
 
 
-def _extract_sitemap_links(base_url: str, session: requests.Session, limit: int = 30) -> list[str]:
+def _extract_sitemap_links(base_url: str, session: requests.Session, timeout_seconds: float, limit: int = 30) -> list[str]:
     parsed = urlparse(base_url)
     root = f"{parsed.scheme}://{parsed.netloc}"
     sitemap_url = f"{root}/sitemap.xml"
     try:
-        response = session.get(sitemap_url, timeout=PAGE_TIMEOUT)
+        response = session.get(sitemap_url, timeout=timeout_seconds)
         response.raise_for_status()
     except Exception:
         return []
@@ -328,7 +318,7 @@ def _extract_sitemap_links(base_url: str, session: requests.Session, limit: int 
     return _dedupe(filtered)[:limit]
 
 
-def _extract_candidate_links(soup: BeautifulSoup, base_url: str, limit: int = 12) -> list[str]:
+def _extract_candidate_links(soup: BeautifulSoup, base_url: str, priority_link_terms: list[str], limit: int = 12) -> list[str]:
     scored: list[tuple[int, str]] = []
     for a in soup.find_all("a", href=True):
         href = (a.get("href") or "").strip()
@@ -341,7 +331,7 @@ def _extract_candidate_links(soup: BeautifulSoup, base_url: str, limit: int = 12
             continue
 
         marker = f"{absolute} {(a.get_text(' ') or '').lower()}"
-        score = sum(1 for term in PRIORITY_LINK_TERMS if term in marker.lower())
+        score = sum(1 for term in priority_link_terms if term in marker.lower())
         if score > 0:
             scored.append((score, absolute))
 
@@ -350,9 +340,9 @@ def _extract_candidate_links(soup: BeautifulSoup, base_url: str, limit: int = 12
     return _dedupe(ordered)[:limit]
 
 
-def _fetch_and_parse(url: str, session: requests.Session) -> tuple[BeautifulSoup | None, str, str | None]:
+def _fetch_and_parse(url: str, session: requests.Session, timeout_seconds: float) -> tuple[BeautifulSoup | None, str, str | None]:
     try:
-        response = session.get(url, timeout=PAGE_TIMEOUT)
+        response = session.get(url, timeout=timeout_seconds)
         response.raise_for_status()
     except Exception as exc:
         return None, "", f"Page fetch failed: {exc}"
@@ -365,7 +355,13 @@ def _fetch_and_parse(url: str, session: requests.Session) -> tuple[BeautifulSoup
     return soup, visible_text, None
 
 
-def scrape_website(url: str | None, max_snippets: int = 30, max_pages: int = 10) -> WebResearchResult:
+def scrape_website(url: str | None, max_snippets: int | None = None, max_pages: int | None = None) -> WebResearchResult:
+    policy = load_research_policy(RESEARCH_POLICY_PATH)
+    timeout_seconds = float(policy.get("page_timeout_seconds", 12.0))
+    effective_max_snippets = int(max_snippets if max_snippets is not None else policy.get("max_snippets_default", 30))
+    effective_max_pages = int(max_pages if max_pages is not None else policy.get("max_pages_default", 10))
+    priority_terms = [str(term).lower() for term in policy.get("priority_link_terms", []) if str(term).strip()]
+
     if not url:
         return WebResearchResult(
             text="",
@@ -392,7 +388,7 @@ def scrape_website(url: str | None, max_snippets: int = 30, max_pages: int = 10)
     }
     source_log: list[dict] = []
 
-    homepage_soup, homepage_text, homepage_err = _fetch_and_parse(str(url), session)
+    homepage_soup, homepage_text, homepage_err = _fetch_and_parse(str(url), session, timeout_seconds)
     if homepage_err:
         return WebResearchResult(
             text="",
@@ -413,17 +409,22 @@ def scrape_website(url: str | None, max_snippets: int = 30, max_pages: int = 10)
     source_log.append({"source": str(url), "type": "website_page", "detail": "Parsed homepage"})
 
     visited = {str(url)}
-    candidate_links = _extract_candidate_links(homepage_soup, str(url), limit=max_pages * 2)
-    sitemap_links = _extract_sitemap_links(str(url), session, limit=max_pages * 3)
+    candidate_links = _extract_candidate_links(
+        homepage_soup,
+        str(url),
+        priority_link_terms=priority_terms,
+        limit=effective_max_pages * 2,
+    )
+    sitemap_links = _extract_sitemap_links(str(url), session, timeout_seconds, limit=effective_max_pages * 3)
     candidate_links = _dedupe(candidate_links + sitemap_links)
 
     for link in candidate_links:
-        if len(visited) >= max_pages:
+        if len(visited) >= effective_max_pages:
             break
         if link in visited:
             continue
 
-        soup, page_text, err = _fetch_and_parse(link, session)
+        soup, page_text, err = _fetch_and_parse(link, session, timeout_seconds)
         visited.add(link)
 
         if err:
@@ -441,7 +442,7 @@ def scrape_website(url: str | None, max_snippets: int = 30, max_pages: int = 10)
 
     combined_text = " ".join(all_text_parts)
     sentences = [s.strip() for s in re.split(r"[.!?]", combined_text) if len(s.strip()) > 40]
-    snippets = _dedupe(all_summary_candidates + sentences)[:max_snippets]
+    snippets = _dedupe(all_summary_candidates + sentences)[:effective_max_snippets]
     discovered_addresses = _dedupe(all_addresses)[:30]
     deduped_contacts: dict[str, dict] = {}
     for contact in all_contacts:

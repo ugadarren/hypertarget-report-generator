@@ -32,19 +32,18 @@ DEFAULT_CREDIT_POLICY = {
             "3": "$1,250/yr for 5 years",
             "4": "$750/yr for 5 years",
         },
-        "special_amount_by_tier": {
-            "1": "$4,000/yr for 5 years",
-            "2": "$3,500/yr for 5 years",
-            "3": "$2,500/yr for 5 years",
-            "4": "$1,750/yr for 5 years",
-        },
         "special_threshold_by_designation": {
             "military_zone": "+2",
             "opportunity_zone": "+2",
             "tier1_lower_40": "+2",
             "ldct": "+5",
         },
-        "tier1_lower_40_amount": "$3,500/yr for 5 years",
+        "special_amount_by_designation": {
+            "military_zone": "$3,500/yr for 5 years",
+            "opportunity_zone": "$3,500/yr for 5 years",
+            "tier1_lower_40": "$3,500/yr for 5 years",
+            "ldct": "$3,500/yr for 5 years"
+        }
     },
     "itc": {
         "pct_by_tier": {
@@ -576,7 +575,7 @@ def _estimate_jtc_benefit(
 ) -> tuple[str, str]:
     policy = credit_policy or DEFAULT_CREDIT_POLICY
     jtc = policy.get("jtc", {})
-    has_special_amount = any([military_zone, ldct, opportunity_zone, tier1_lower_40])
+    has_special_designation = any([military_zone, ldct, opportunity_zone, tier1_lower_40])
     if not tier_value:
         return ("Unavailable", "Unavailable")
     normalized = "".join(ch for ch in str(tier_value) if ch.isdigit())
@@ -587,19 +586,39 @@ def _estimate_jtc_benefit(
     base_threshold_by_tier = jtc.get("base_threshold_by_tier", {})
     base_amount_by_tier = jtc.get("base_amount_by_tier", {})
 
-    if has_special_amount:
-        amount_by_tier = jtc.get("special_amount_by_tier", {})
+    if has_special_designation:
         threshold_by_designation = jtc.get("special_threshold_by_designation", {})
+        amount_by_designation = jtc.get("special_amount_by_designation", {})
         threshold_candidates: list[str] = []
+        amount_candidates: list[str] = []
         if military_zone:
-            threshold_candidates.append(str(threshold_by_designation.get("military_zone", "")))
+            threshold = str(threshold_by_designation.get("military_zone", ""))
+            amount = str(amount_by_designation.get("military_zone", ""))
+            if threshold:
+                threshold_candidates.append(threshold)
+            if amount:
+                amount_candidates.append(amount)
         if opportunity_zone:
-            threshold_candidates.append(str(threshold_by_designation.get("opportunity_zone", "")))
+            threshold = str(threshold_by_designation.get("opportunity_zone", ""))
+            amount = str(amount_by_designation.get("opportunity_zone", ""))
+            if threshold:
+                threshold_candidates.append(threshold)
+            if amount:
+                amount_candidates.append(amount)
         if tier1_lower_40:
-            threshold_candidates.append(str(threshold_by_designation.get("tier1_lower_40", "")))
+            threshold = str(threshold_by_designation.get("tier1_lower_40", ""))
+            amount = str(amount_by_designation.get("tier1_lower_40", ""))
+            if threshold:
+                threshold_candidates.append(threshold)
+            if amount:
+                amount_candidates.append(amount)
         if ldct:
-            threshold_candidates.append(str(threshold_by_designation.get("ldct", "")))
-        threshold_candidates = [item for item in threshold_candidates if item]
+            threshold = str(threshold_by_designation.get("ldct", ""))
+            amount = str(amount_by_designation.get("ldct", ""))
+            if threshold:
+                threshold_candidates.append(threshold)
+            if amount:
+                amount_candidates.append(amount)
         if threshold_candidates:
             special_threshold = min(
                 threshold_candidates,
@@ -608,9 +627,14 @@ def _estimate_jtc_benefit(
         else:
             special_threshold = "+2"
 
-        special_amount = amount_by_tier.get(str(tier_num), "Unavailable")
-        if tier_num == 1 and tier1_lower_40 and not military_zone and not opportunity_zone:
-            special_amount = jtc.get("tier1_lower_40_amount", "$3,500/yr for 5 years")
+        if amount_candidates:
+            special_amount = max(
+                amount_candidates,
+                key=lambda amount: int("".join(ch for ch in amount if ch.isdigit()) or "0"),
+            )
+        else:
+            # Backward compatibility for older policy files that still store special amounts by tier.
+            special_amount = jtc.get("special_amount_by_tier", {}).get(str(tier_num), "Unavailable")
         return (special_threshold, special_amount)
 
     return (

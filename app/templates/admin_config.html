@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Config</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <main class="container report-doc">
+      <header>
+        <h1>Admin - Config Editor</h1>
+        <p>
+          <a class="button-link" href="/">Back to Generator</a>
+          <a class="button-link" href="/admin/exports">Open Saved Exports</a>
+        </p>
+      </header>
+
+      {% if saved %}
+      <section class="doc-section success-box">
+        <p>Configuration saved successfully.</p>
+      </section>
+      {% endif %}
+
+      {% if error %}
+      <section class="doc-section warning">
+        <p><strong>Save failed:</strong> {{ error }}</p>
+      </section>
+      {% endif %}
+
+      <section class="doc-section">
+        <form method="post" action="/admin/config">
+          <label for="report_copy_json">report_copy.json</label>
+          <textarea class="config-editor" id="report_copy_json" name="report_copy_json" spellcheck="false">{{ report_copy_json }}</textarea>
+
+          <label for="web_research_policy_json">web_research_policy.json</label>
+          <textarea class="config-editor" id="web_research_policy_json" name="web_research_policy_json" spellcheck="false">{{ web_research_policy_json }}</textarea>
+
+          <button type="submit">Save Configuration</button>
+        </form>
+      </section>
+    </main>
+  </body>
+</html>

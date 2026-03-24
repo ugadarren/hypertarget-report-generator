@@ -5,11 +5,14 @@ from datetime import datetime, timezone
 from pathlib import Path
 from uuid import uuid4
 
+from app.config import get_settings
 from app.models import CompanyInput, Report
 from app.services.llm_enrichment import detect_sector_with_llm, enrich_sector_profile, extract_contacts_with_llm
+from app.services.data_validation import validate_data_files
 from app.services.location import assess_locations, load_county_tiers, load_county_tier_history, load_credit_policy
 from app.services.opportunity_engine import build_credit_assessments
 from app.services.policy_meta import load_policy_versions
+from app.services.report_copy import apply_report_copy_template, load_report_copy
 from app.services.sector import infer_sector_from_text, resolve_sector_from_input
 from app.services.web_research import scrape_website
 
@@ -153,6 +156,7 @@ class ReportService:
         self.data_dir = data_dir
         self.reports_dir = reports_dir
         self.reports_dir.mkdir(parents=True, exist_ok=True)
+        validate_data_files(self.data_dir)
 
     def _load_tier_map(self) -> dict[str, str]:
         tier_map_path = self.data_dir / "ga_county_tiers.json"
@@ -169,6 +173,10 @@ class ReportService:
     def _load_policy_versions(self) -> dict:
         versions_path = self.data_dir / "policy_versions.json"
         return load_policy_versions(versions_path)
+
+    def _load_report_copy(self) -> dict[str, str]:
+        copy_path = self.data_dir / "report_copy.json"
+        return load_report_copy(copy_path)
 
     def _collect_web_context(self, payload: CompanyInput):
         web = scrape_website(str(payload.website) if payload.website else None)
@@ -229,6 +237,16 @@ class ReportService:
 
     def _enrich_contacts(self, payload: CompanyInput, web) -> list[dict]:
         base_contacts = list(web.contact_leads or [])
+        settings = get_settings()
+        if not settings.enable_llm_contact_enrichment:
+            web.source_log.append(
+                {
+                    "source": "config",
+                    "type": "feature_flag",
+                    "detail": "GPT contact enrichment disabled by ENABLE_LLM_CONTACT_ENRICHMENT.",
+                }
+            )
+            return base_contacts
         llm_contacts, llm_log = extract_contacts_with_llm(
             company_name=payload.company_name,
             website=str(payload.website) if payload.website else None,
@@ -280,7 +298,15 @@ class ReportService:
         )
         return credits, expansion_signals, property_signals
 
-    def _build_narrative(self, payload: CompanyInput, sector, credits, expansion_signals: list[str], locations) -> dict:
+    def _build_narrative(
+        self,
+        payload: CompanyInput,
+        sector,
+        credits,
+        expansion_signals: list[str],
+        locations,
+        report_copy: dict[str, str],
+    ) -> dict:
         ga_retraining = next((c for c in credits if c.code == "GA_RETRAINING"), None)
         federal_rd = next((c for c in credits if c.code == "FEDERAL_RD"), None)
         ga_investment = next((c for c in credits if c.code == "GA_INVESTMENT"), None)
@@ -294,50 +320,20 @@ class ReportService:
             or f"{payload.company_name} appears to operate in the {sector.sector.lower()} industry.",
             "sector_summary": sector.sector_summary
             or "Industry classification is based on website language and should be analyst-reviewed.",
-            "ga_jtc_intro": (
-                "The Georgia Job Tax Credit rewards businesses that create new full-time jobs in the state by "
-                "providing a tax credit ranging from $1,250 to $4,000 per job per year for up to five years, "
-                "depending on the county. For business owners, this can significantly reduce Georgia income tax "
-                "liability and, in some cases, offset payroll withholding, lowering the cost of expanding their workforce."
-            ),
-            "ga_jtc_note": (
-                f"{payload.company_name}'s Georgia location(s) are listed below with their corresponding tier "
-                "designations and estimated credit benefits."
-            ),
+            "ga_jtc_intro": apply_report_copy_template(report_copy.get("ga_jtc_intro", ""), company_name=payload.company_name),
+            "ga_jtc_note": apply_report_copy_template(report_copy.get("ga_jtc_note", ""), company_name=payload.company_name),
             "ga_jtc_prior_years": prior_years,
             "ga_jtc_prior_rows": prior_rows,
-            "retraining_intro": (
-                "The Georgia RTC provides businesses with a tax credit of up to 50% of eligible training costs for "
-                "retraining existing employees to upgrade skills, adopt new technologies, or improve productivity. "
-                "For business owners, it reduces the cost of workforce development, by up to $1,250 per employee per "
-                "year, while helping employees stay competitive and efficient as the company grows."
-            ),
-            "retraining_intro_lead": (
-                "The Georgia RTC provides businesses with a tax credit of up to 50% of eligible training costs for "
-                "retraining existing employees to upgrade skills, adopt new technologies, or improve productivity. "
-                "For business owners, it reduces the cost of workforce development, "
-            ),
-            "retraining_intro_emphasis": "by up to $1,250 per employee per year",
-            "retraining_intro_tail": (
-                ", while helping employees stay competitive and efficient as the company grows."
-            ),
-            "retraining_context": (
-                "Below are some examples of software systems and equipment relevant to your industry that may qualify "
-                "for the GA RTC."
-            ),
+            "retraining_intro": apply_report_copy_template(report_copy.get("retraining_intro", ""), company_name=payload.company_name),
+            "retraining_intro_lead": apply_report_copy_template(report_copy.get("retraining_intro_lead", ""), company_name=payload.company_name),
+            "retraining_intro_emphasis": apply_report_copy_template(report_copy.get("retraining_intro_emphasis", ""), company_name=payload.company_name),
+            "retraining_intro_tail": apply_report_copy_template(report_copy.get("retraining_intro_tail", ""), company_name=payload.company_name),
+            "retraining_context": apply_report_copy_template(report_copy.get("retraining_context", ""), company_name=payload.company_name),
             "retraining_feasibility": (ga_retraining.status if ga_retraining else "possible").title(),
             "retraining_confidence_pct": round(((ga_retraining.confidence if ga_retraining else 0.6) or 0) * 100),
             "retraining_rationale": (ga_retraining.rationale if ga_retraining else "Retraining potential estimated from sector systems and equipment."),
-            "rd_intro": (
-                "The Federal and Georgia R&D Tax Credits reward businesses that invest in developing or improving "
-                "products, processes, or software, typically providing a combined tax benefit of roughly 10-20% of "
-                "qualified research expenses. For business owners, this can significantly reduce federal and state tax "
-                "liability-or offset payroll taxes in some cases-freeing up cash to reinvest in innovation, hiring, and growth."
-            ),
-            "rd_examples_intro": (
-                f"Below are potential qualifying activities for {payload.company_name} that are specific to the "
-                "industry in which you operate."
-            ),
+            "rd_intro": apply_report_copy_template(report_copy.get("rd_intro", ""), company_name=payload.company_name),
+            "rd_examples_intro": apply_report_copy_template(report_copy.get("rd_examples_intro", ""), company_name=payload.company_name),
             "rd_feasibility": (federal_rd.status if federal_rd else sector.rd_feasibility).title(),
             "rd_confidence_pct": round(((federal_rd.confidence if federal_rd else sector.rd_confidence) or 0) * 100),
             "rd_rationale": (federal_rd.rationale if federal_rd else sector.rd_rationale) or "",
@@ -347,34 +343,16 @@ class ReportService:
             "investment_status": ga_investment.status if ga_investment else "possible",
             "investment_rationale": ga_investment.rationale if ga_investment else "",
             "investment_confidence_pct": round(((ga_investment.confidence if ga_investment else 0.5) or 0) * 100),
-            "investment_intro": (
-                "The Georgia Investment Tax Credit rewards manufacturing, warehousing, and telecom businesses that "
-                "invest in new equipment or facilities by providing a state tax credit of 1% to 8% of qualified "
-                "capital investment, depending on the county and industry. For business owners, this credit helps "
-                "offset Georgia income tax liability and lowers the overall cost of expanding operations, upgrading "
-                "equipment, or increasing production capacity."
-            ),
-            "investment_note": (
-                f"The County, tier, and potential investment credit percentage are listed below for "
-                f"{payload.company_name}'s location(s)."
-            ),
+            "investment_intro": apply_report_copy_template(report_copy.get("investment_intro", ""), company_name=payload.company_name),
+            "investment_note": apply_report_copy_template(report_copy.get("investment_note", ""), company_name=payload.company_name),
             "investment_signals_summary": _investment_client_summary(
                 payload.company_name,
                 expansion_signals,
                 ga_investment.status if ga_investment else "possible",
             ),
-            "costseg_intro": (
-                "Cost Segregation is a tax strategy that allows commercial property owners to accelerate depreciation "
-                "on certain building components, often enabling 20-40% of the property's value to be depreciated "
-                "within the first 5-15 years instead of 39 years. For business owners, this acceleration can create "
-                "significant upfront tax savings and improved cash flow that can be reinvested back into the business."
-            ),
-            "costseg_note": (
-                "If you've purchased, built, or renovated commercial real estate in the last five years, a Cost "
-                "Segregation study may allow you to accelerate depreciation and unlock significant tax savings. It's "
-                "often worth taking a look to see how much additional cash flow you could generate by reclassifying "
-                "parts of the property into shorter depreciation schedules."
-            ),
+            "costseg_intro": apply_report_copy_template(report_copy.get("costseg_intro", ""), company_name=payload.company_name),
+            "costseg_note": apply_report_copy_template(report_copy.get("costseg_note", ""), company_name=payload.company_name),
+            "contact_intro": apply_report_copy_template(report_copy.get("contact_intro", ""), company_name=payload.company_name),
         }
 
     def _build_report(
@@ -413,6 +391,7 @@ class ReportService:
         tier_history_map = self._load_tier_history_map()
         credit_policy = self._load_credit_policy()
         policy_versions = self._load_policy_versions()
+        report_copy = self._load_report_copy()
         policy_year_value = str(policy_versions.get("policy_year", "")).strip()
         reference_year = int(policy_year_value) if policy_year_value.isdigit() else None
         web = self._collect_web_context(payload)
@@ -428,11 +407,7 @@ class ReportService:
             reference_year,
         )
         credits, expansion_signals, property_signals = self._assess_credits(sector, locations, payload, web)
-        narrative = self._build_narrative(payload, sector, credits, expansion_signals, locations)
-        narrative["contact_intro"] = (
-            "The contacts below were identified from publicly available website content and may include owner, "
-            "founder, executive, or general decision-maker signals. Please verify title and email accuracy before outreach."
-        )
+        narrative = self._build_narrative(payload, sector, credits, expansion_signals, locations, report_copy)
         narrative["policy_year"] = policy_versions.get("policy_year", "unspecified")
         narrative["policy_versions"] = policy_versions
         web.source_log.append(

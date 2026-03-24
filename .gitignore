@@ -1,13 +1,5 @@
 __pycache__/
 *.pyc
-reports/*.json
-reports/exports/*.docx
-cat >> .gitignore << 'EOF'
-__pycache__/
-*.pyc
-reports/*.json
-reports/exports/*.docx
-__pycache__/
-*.pyc
+.venv/
 reports/*.json
 reports/exports/*.docx

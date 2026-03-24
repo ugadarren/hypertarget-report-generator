@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import os
 from pathlib import Path
 from datetime import datetime
@@ -19,6 +20,7 @@ from app.services.report_service import ReportService
 from app.services.word_export import WordExportService
 
 BASE_DIR = Path(__file__).resolve().parent
+DATA_DIR = BASE_DIR / "data"
 service = ReportService(data_dir=BASE_DIR / "data", reports_dir=BASE_DIR.parent / "reports")
 word_export = WordExportService(exports_dir=BASE_DIR.parent / "reports" / "exports")
 designation_service = ArcGISDesignationService()
@@ -86,6 +88,7 @@ async def status():
     return {
         "auth_enabled": settings.auth_enabled,
         "gpt_enabled": settings.gpt_enabled,
+        "llm_contact_enrichment_enabled": settings.enable_llm_contact_enrichment,
         "openai_model": settings.openai_model,
         "arcgis_viewer_url": settings.arcgis_viewer_url,
     }
@@ -106,6 +109,102 @@ async def admin_exports(request: Request):
             }
         )
     return templates.TemplateResponse("admin_exports.html", {"request": request, "files": files})
+
+
+@app.get("/admin/config", response_class=HTMLResponse)
+async def admin_config(request: Request):
+    report_copy_path = DATA_DIR / "report_copy.json"
+    web_policy_path = DATA_DIR / "web_research_policy.json"
+    return templates.TemplateResponse(
+        "admin_config.html",
+        {
+            "request": request,
+            "report_copy_json": json.dumps(json.loads(report_copy_path.read_text()), indent=2),
+            "web_research_policy_json": json.dumps(json.loads(web_policy_path.read_text()), indent=2),
+            "saved": request.query_params.get("saved") == "1",
+            "error": request.query_params.get("error", ""),
+        },
+    )
+
+
+@app.post("/admin/config", response_class=HTMLResponse)
+async def save_admin_config(
+    request: Request,
+    report_copy_json: str = Form(...),
+    web_research_policy_json: str = Form(...),
+):
+    try:
+        parsed_report_copy = json.loads(report_copy_json)
+        parsed_web_policy = json.loads(web_research_policy_json)
+    except Exception as exc:
+        return templates.TemplateResponse(
+            "admin_config.html",
+            {
+                "request": request,
+                "report_copy_json": report_copy_json,
+                "web_research_policy_json": web_research_policy_json,
+                "saved": False,
+                "error": f"Invalid JSON: {exc}",
+            },
+            status_code=400,
+        )
+
+    if not isinstance(parsed_report_copy, dict):
+        return templates.TemplateResponse(
+            "admin_config.html",
+            {
+                "request": request,
+                "report_copy_json": report_copy_json,
+                "web_research_policy_json": web_research_policy_json,
+                "saved": False,
+                "error": "report_copy.json must be a JSON object.",
+            },
+            status_code=400,
+        )
+    if not isinstance(parsed_web_policy, dict):
+        return templates.TemplateResponse(
+            "admin_config.html",
+            {
+                "request": request,
+                "report_copy_json": report_copy_json,
+                "web_research_policy_json": web_research_policy_json,
+                "saved": False,
+                "error": "web_research_policy.json must be a JSON object.",
+            },
+            status_code=400,
+        )
+
+    required_copy_keys = {"ga_jtc_intro", "rd_intro", "investment_intro", "costseg_intro"}
+    missing_copy = sorted([k for k in required_copy_keys if k not in parsed_report_copy])
+    if missing_copy:
+        return templates.TemplateResponse(
+            "admin_config.html",
+            {
+                "request": request,
+                "report_copy_json": report_copy_json,
+                "web_research_policy_json": web_research_policy_json,
+                "saved": False,
+                "error": f"report_copy.json is missing required keys: {', '.join(missing_copy)}",
+            },
+            status_code=400,
+        )
+
+    if "priority_link_terms" not in parsed_web_policy or not isinstance(parsed_web_policy.get("priority_link_terms"), list):
+        return templates.TemplateResponse(
+            "admin_config.html",
+            {
+                "request": request,
+                "report_copy_json": report_copy_json,
+                "web_research_policy_json": web_research_policy_json,
+                "saved": False,
+                "error": "web_research_policy.json must include a list key: priority_link_terms",
+            },
+            status_code=400,
+        )
+
+    (DATA_DIR / "report_copy.json").write_text(json.dumps(parsed_report_copy, indent=2))
+    (DATA_DIR / "web_research_policy.json").write_text(json.dumps(parsed_web_policy, indent=2))
+    return RedirectResponse(url="/admin/config?saved=1", status_code=303)
 
 
 @app.get("/admin/exports/{filename}")

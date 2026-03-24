@@ -33,6 +33,28 @@ class TierLogicTests(unittest.TestCase):
         self.assertEqual(threshold, "+5")
         self.assertEqual(amount, "$3,500/yr for 5 years")
 
+    def test_ldct_overrides_tier3_county_benefit(self):
+        threshold, amount = _estimate_jtc_benefit(
+            tier_value="3",
+            military_zone=False,
+            ldct=True,
+            opportunity_zone=False,
+            tier1_lower_40=False,
+        )
+        self.assertEqual(threshold, "+5")
+        self.assertEqual(amount, "$3,500/yr for 5 years")
+
+    def test_multiple_special_designations_choose_best_special_benefit(self):
+        threshold, amount = _estimate_jtc_benefit(
+            tier_value="4",
+            military_zone=False,
+            ldct=True,
+            opportunity_zone=True,
+            tier1_lower_40=False,
+        )
+        self.assertEqual(threshold, "+2")
+        self.assertEqual(amount, "$3,500/yr for 5 years")
+
     def test_tier1_lower40_threshold_and_amount(self):
         threshold, amount = _estimate_jtc_benefit(
             tier_value="1",

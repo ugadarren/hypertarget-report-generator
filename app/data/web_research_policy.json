@@ -1,0 +1,17 @@
+{
+  "page_timeout_seconds": 12,
+  "max_pages_default": 10,
+  "max_snippets_default": 30,
+  "priority_link_terms": [
+    "news",
+    "newsroom",
+    "press",
+    "media",
+    "about",
+    "locations",
+    "facility",
+    "facilities",
+    "expansion",
+    "investor"
+  ]
+}

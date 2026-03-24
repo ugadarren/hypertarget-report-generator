@@ -53,6 +53,7 @@ Optional GPT enrichment:
 ```bash
 export OPENAI_API_KEY="your-openai-key"
 export OPENAI_MODEL="gpt-4.1-mini"
+export ENABLE_LLM_CONTACT_ENRICHMENT="true"
 ```
 
 Optional ArcGIS source override:
@@ -128,7 +129,10 @@ Sector correction capture:
 - JTC/ITC credit values are read from `app/data/ga_credit_policy.json` (update this yearly).
 - Policy version metadata is read from `app/data/policy_versions.json` and shown in report output.
 - Multi-year county tiers are read from `app/data/ga_county_tiers_by_year.json` for current + prior 5-year reference in reports.
+- Client-facing report wording is read from `app/data/report_copy.json` (edit copy here, no code changes needed).
+- Web crawling behavior is read from `app/data/web_research_policy.json` (timeouts, page limits, and priority links).
 - Refresh this file each year from the Georgia DCA county ranking memo.
+- App startup validates required JSON data files and key schema fields; malformed/missing files will fail fast.
 - If you have a CSV source, place it at `app/data/ga_county_tiers_source.csv` with columns `county,tier` and run:
 
 ```bash

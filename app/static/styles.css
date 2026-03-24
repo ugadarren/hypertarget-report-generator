@@ -66,6 +66,7 @@ button {
   padding: 0.55rem 0.9rem;
   font-weight: 700;
   border: 0;
+  margin-right: 0.45rem;
 }
 
 .download-controls {
@@ -87,6 +88,19 @@ button {
 .download-toggle input {
   width: 16px;
   margin: 0;
+}
+
+.config-editor {
+  min-height: 280px;
+  font-family: "Menlo", "Consolas", monospace;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  white-space: pre;
+}
+
+.success-box {
+  border-left: 6px solid #2f8f57;
+  background: #edf8f1;
 }
 
 .grid { display: grid; gap: 1rem; }
@@ -215,25 +229,6 @@ th, td {
   border-left: 1px solid #fff;
 }
 
-.history-accordion {
-  margin-top: 0.7rem;
-  border: 1px solid #d6e0e8;
-  border-radius: 10px;
-  background: #f8fbfd;
-  padding: 0.45rem 0.7rem 0.7rem;
-}
-
-.history-accordion summary {
-  cursor: pointer;
-  font-weight: 700;
-  color: #17384d;
-  outline: none;
-  margin-bottom: 0.4rem;
-}
-
-.history-accordion[open] summary {
-  margin-bottom: 0.65rem;
-}
 
 .explorer-page {
   display: grid;

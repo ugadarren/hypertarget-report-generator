@@ -17,6 +17,7 @@ class Settings:
     openai_model: str
     openai_timeout_seconds: float
     arcgis_viewer_url: str
+    enable_llm_contact_enrichment: bool
 
     @property
     def auth_enabled(self) -> bool:
@@ -34,6 +35,9 @@ def get_settings() -> Settings:
     except Exception:
         timeout = DEFAULT_OPENAI_TIMEOUT_SECONDS
 
+    enable_contact_llm_raw = os.getenv("ENABLE_LLM_CONTACT_ENRICHMENT", "true").strip().lower()
+    enable_contact_llm = enable_contact_llm_raw not in {"0", "false", "no", "off"}
+
     return Settings(
         app_username=os.getenv("APP_USERNAME", "").strip(),
         app_password=os.getenv("APP_PASSWORD", "").strip(),
@@ -41,4 +45,5 @@ def get_settings() -> Settings:
         openai_model=os.getenv("OPENAI_MODEL", DEFAULT_OPENAI_MODEL).strip() or DEFAULT_OPENAI_MODEL,
         openai_timeout_seconds=timeout,
         arcgis_viewer_url=os.getenv("ARCGIS_VIEWER_URL", DEFAULT_ARCGIS_VIEWER_URL).strip() or DEFAULT_ARCGIS_VIEWER_URL,
+        enable_llm_contact_enrichment=enable_contact_llm,
     )

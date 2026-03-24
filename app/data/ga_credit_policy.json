@@ -12,19 +12,18 @@
       "3": "$1,250/yr for 5 years",
       "4": "$750/yr for 5 years"
     },
-    "special_amount_by_tier": {
-      "1": "$4,000/yr for 5 years",
-      "2": "$3,500/yr for 5 years",
-      "3": "$2,500/yr for 5 years",
-      "4": "$1,750/yr for 5 years"
-    },
     "special_threshold_by_designation": {
       "military_zone": "+2",
       "opportunity_zone": "+2",
       "tier1_lower_40": "+2",
       "ldct": "+5"
     },
-    "tier1_lower_40_amount": "$3,500/yr for 5 years"
+    "special_amount_by_designation": {
+      "military_zone": "$3,500/yr for 5 years",
+      "opportunity_zone": "$3,500/yr for 5 years",
+      "tier1_lower_40": "$3,500/yr for 5 years",
+      "ldct": "$3,500/yr for 5 years"
+    }
   },
   "itc": {
     "pct_by_tier": {
