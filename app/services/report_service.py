@@ -218,6 +218,7 @@ class ReportService:
                     weighted_texts=web.weighted_texts,
                     company_name=payload.company_name,
                 )
+                sector.sector_candidates = candidates[:3]
                 web.source_log.append(
                     {
                         "source": "sector",

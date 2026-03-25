@@ -163,14 +163,12 @@ def detect_sector_with_llm(
     research_text: str,
 ) -> tuple[dict[str, str] | None, dict[str, str]]:
     settings = get_settings()
-    candidates = sector_candidates(research_text, snippets, weighted_texts)
-    top_candidates = candidates[:3]
-    if sector_needs_review(candidates):
-        return None, {
-            "source": "sector",
-            "type": "review_required",
-            "detail": "Sector evidence is ambiguous; keyword candidates are too weak or too close to force a GPT classification.",
-        }
+    curated_evidence = {
+        "title": (weighted_texts or {}).get("title", ""),
+        "meta": (weighted_texts or {}).get("meta", ""),
+        "headings": (weighted_texts or {}).get("headings", ""),
+        "paragraphs": (weighted_texts or {}).get("paragraphs", ""),
+    }
     if not settings.gpt_enabled:
         return None, {
             "source": "openai",
@@ -178,31 +176,22 @@ def detect_sector_with_llm(
             "detail": "OPENAI_API_KEY not configured; used keyword-based sector inference.",
         }
 
-    choices = [
-        {
-            "key": str(item["sector_key"]),
-            "label": str(item["sector_label"]),
-            "family": str(item["family"]),
-            "score": int(item["score"]),
-        }
-        for item in top_candidates
-    ]
+    choices = [{"key": key, "label": str(value.get("label", key))} for key, value in SECTOR_DETAILS.items()]
     prompt = f"""
-Classify the company's primary industry sector from the allowed candidate options only.
+Classify the company's primary industry sector from the allowed sector options.
+Focus on what the company actually sells, manufactures, distributes, or delivers.
+Do not classify based on generic internal technology, software tools, or digital transformation language unless the company itself is fundamentally a software/technology business.
 
 Company: {company_name}
 Website: {website or "Not provided"}
-Allowed candidate sectors JSON:
+Allowed sectors JSON:
 {json.dumps(choices)}
 
-Weighted company-description evidence:
-{json.dumps(weighted_texts or {}, ensure_ascii=True)}
+Curated company-description evidence:
+{json.dumps(curated_evidence, ensure_ascii=True)}
 
 Website snippets:
-{_clip(chr(10).join(snippets[:20]), 12000)}
-
-Additional text:
-{_clip(research_text, 12000)}
+{_clip(chr(10).join(snippets[:10]), 8000)}
 
 Return JSON only:
 {{
@@ -234,7 +223,7 @@ Return JSON only:
     keyword_ranked = keyword_sector_scores(research_text, snippets, weighted_texts)
     top_keyword_key, top_keyword_score = keyword_ranked[0] if keyword_ranked else ("", 0)
     detected_keyword_score = next((score for key, score in keyword_ranked if key == sector_key), 0)
-    if top_keyword_key and top_keyword_key != sector_key and top_keyword_score >= max(8, detected_keyword_score + 6):
+    if top_keyword_key and top_keyword_key != sector_key and top_keyword_score >= max(12, detected_keyword_score + 10):
         top_label = str(SECTOR_DETAILS.get(top_keyword_key, {}).get("label", top_keyword_key))
         return None, {
             "source": "openai",
@@ -246,7 +235,7 @@ Return JSON only:
         }
     top_family = sector_family(top_keyword_key) if top_keyword_key else ""
     detected_family = sector_family(sector_key)
-    if top_family and detected_family != top_family and top_keyword_score >= 10:
+    if top_family and detected_family != top_family and top_keyword_score >= 16:
         return None, {
             "source": "openai",
             "type": "llm_error",
