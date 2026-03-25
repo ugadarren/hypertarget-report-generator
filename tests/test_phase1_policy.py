@@ -160,6 +160,19 @@ class SectorInferenceTests(unittest.TestCase):
         self.assertEqual(candidates[0]["sector_key"], "healthcare")
         self.assertEqual(candidates[0]["family"], "healthcare_life_sciences")
 
+    def test_weighted_company_description_outweighs_noisy_software_text(self):
+        candidates = sector_candidates(
+            "platform software cloud integration analytics dashboard portal application",
+            ["digital transformation", "software systems"],
+            {
+                "title": "ASP Global | Medical Supplies and Strategic Sourcing",
+                "meta": "Strategic sourcing partner for healthcare providers and distributors of medical products.",
+                "headings": "Medical products Diagnostic Blood collection Healthcare systems",
+                "paragraphs": "ASP Global supports hospitals and healthcare providers with sourced medical supplies.",
+            },
+        )
+        self.assertEqual(candidates[0]["sector_key"], "healthcare")
+
 
 if __name__ == "__main__":
     unittest.main()

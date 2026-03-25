@@ -193,11 +193,12 @@ class ReportService:
                 }
             )
         else:
-            candidates = sector_candidates(web.text, web.snippets)
+            candidates = sector_candidates(web.text, web.snippets, web.weighted_texts)
             detected, detect_log = detect_sector_with_llm(
                 company_name=payload.company_name,
                 website=str(payload.website) if payload.website else None,
                 snippets=web.snippets,
+                weighted_texts=web.weighted_texts,
                 research_text=web.text,
             )
             web.source_log.append(detect_log)
@@ -214,6 +215,7 @@ class ReportService:
                 sector = infer_sector_from_text(
                     website_text=web.text,
                     snippets=web.snippets,
+                    weighted_texts=web.weighted_texts,
                     company_name=payload.company_name,
                 )
                 web.source_log.append(

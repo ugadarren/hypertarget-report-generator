@@ -26,8 +26,30 @@ def sector_family(sector_key: str) -> str:
     return SECTOR_FAMILIES.get(sector_key, "other")
 
 
-def keyword_sector_scores(website_text: str, snippets: list[str] | None = None) -> list[tuple[str, int]]:
-    haystack = f"{(website_text or '').lower()} {' '.join(snippets or []).lower()}"
+def _weighted_sector_haystack(
+    website_text: str,
+    snippets: list[str] | None = None,
+    weighted_texts: dict[str, str] | None = None,
+) -> str:
+    weighted = weighted_texts or {}
+    parts: list[str] = []
+    # Weight the most representative company-description fields higher than the full crawl.
+    parts.extend([weighted.get("title", "")] * 4)
+    parts.extend([weighted.get("meta", "")] * 4)
+    parts.extend([weighted.get("headings", "")] * 3)
+    parts.extend([" ".join(snippets or [])] * 2)
+    parts.extend([weighted.get("paragraphs", "")] * 2)
+    parts.extend([weighted.get("links", "")])
+    parts.extend([website_text or ""])
+    return " ".join(parts).lower()
+
+
+def keyword_sector_scores(
+    website_text: str,
+    snippets: list[str] | None = None,
+    weighted_texts: dict[str, str] | None = None,
+) -> list[tuple[str, int]]:
+    haystack = _weighted_sector_haystack(website_text, snippets, weighted_texts)
     scores: dict[str, int] = {}
     for sector_key, keywords in INDUSTRY_KEYWORDS.items():
         score = 0
@@ -42,8 +64,12 @@ def keyword_sector_scores(website_text: str, snippets: list[str] | None = None) 
     return sorted(scores.items(), key=lambda item: item[1], reverse=True)
 
 
-def sector_candidates(website_text: str, snippets: list[str] | None = None) -> list[dict[str, Any]]:
-    ranked = keyword_sector_scores(website_text, snippets)
+def sector_candidates(
+    website_text: str,
+    snippets: list[str] | None = None,
+    weighted_texts: dict[str, str] | None = None,
+) -> list[dict[str, Any]]:
+    ranked = keyword_sector_scores(website_text, snippets, weighted_texts)
     candidates: list[dict[str, Any]] = []
     for sector_key, score in ranked:
         candidates.append(
@@ -276,6 +302,7 @@ def resolve_sector_from_input(sector_input: str, company_name: str | None = None
 def infer_sector_from_text(
     website_text: str,
     snippets: list[str] | None = None,
+    weighted_texts: dict[str, str] | None = None,
     company_name: str | None = None,
 ) -> SectorProfile:
     haystack = f"{(website_text or '').lower()} {' '.join(snippets or []).lower()}"
@@ -292,7 +319,7 @@ def infer_sector_from_text(
         profile.sector_summary = "Industry classification could not be inferred from website text and should be manually reviewed."
         return profile
 
-    candidates = sector_candidates(website_text, snippets)
+    candidates = sector_candidates(website_text, snippets, weighted_texts)
     best = candidates[0] if candidates else {"sector_key": "software", "score": 0}
     best_key = str(best.get("sector_key", "software"))
     best_score = int(best.get("score", 0) or 0)

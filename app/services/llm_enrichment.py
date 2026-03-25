@@ -159,10 +159,11 @@ def detect_sector_with_llm(
     company_name: str,
     website: str | None,
     snippets: list[str],
+    weighted_texts: dict[str, str] | None,
     research_text: str,
 ) -> tuple[dict[str, str] | None, dict[str, str]]:
     settings = get_settings()
-    candidates = sector_candidates(research_text, snippets)
+    candidates = sector_candidates(research_text, snippets, weighted_texts)
     top_candidates = candidates[:3]
     if sector_needs_review(candidates):
         return None, {
@@ -193,6 +194,9 @@ Company: {company_name}
 Website: {website or "Not provided"}
 Allowed candidate sectors JSON:
 {json.dumps(choices)}
+
+Weighted company-description evidence:
+{json.dumps(weighted_texts or {}, ensure_ascii=True)}
 
 Website snippets:
 {_clip(chr(10).join(snippets[:20]), 12000)}
@@ -227,7 +231,7 @@ Return JSON only:
 
     sector_label = str(parsed.get("sector_label", "")).strip() or str(SECTOR_DETAILS[sector_key].get("label", sector_key))
     reason = str(parsed.get("reason", "")).strip() or "Sector selected from website evidence."
-    keyword_ranked = keyword_sector_scores(research_text, snippets)
+    keyword_ranked = keyword_sector_scores(research_text, snippets, weighted_texts)
     top_keyword_key, top_keyword_score = keyword_ranked[0] if keyword_ranked else ("", 0)
     detected_keyword_score = next((score for key, score in keyword_ranked if key == sector_key), 0)
     if top_keyword_key and top_keyword_key != sector_key and top_keyword_score >= max(8, detected_keyword_score + 6):
