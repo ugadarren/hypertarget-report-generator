@@ -487,3 +487,50 @@ Rules:
         "type": "llm",
         "detail": f"Applied GPT contact extraction ({settings.openai_model}) from public website evidence.",
     }
+
+
+def generate_industry_description_with_llm(
+    *,
+    website: str | None,
+) -> tuple[str | None, dict[str, str]]:
+    settings = get_settings()
+    if not settings.gpt_enabled:
+        return None, {
+            "source": "openai",
+            "type": "llm",
+            "detail": "OPENAI_API_KEY not configured; used fallback company description.",
+        }
+    if not website:
+        return None, {
+            "source": "openai",
+            "type": "llm",
+            "detail": "No website provided; used fallback company description.",
+        }
+
+    prompt = f"Detect what industry this company is in and give me two sentences about it: {website}"
+    data, err = _post_openai(
+        prompt,
+        "You are a precise business analyst. Respond with exactly two client-ready sentences and no bullet points or labels.",
+        model=settings.openai_model,
+        api_key=settings.openai_api_key,
+        timeout_seconds=settings.openai_timeout_seconds,
+    )
+    if err or not data:
+        return None, {
+            "source": "openai",
+            "type": "llm_error",
+            "detail": f"LLM industry description failed: {err or 'unknown'}",
+        }
+
+    text = _clip(_response_output_text(data).strip(), 1200)
+    if not text:
+        return None, {
+            "source": "openai",
+            "type": "llm_error",
+            "detail": "LLM industry description returned empty output.",
+        }
+    return text, {
+        "source": "openai",
+        "type": "llm",
+        "detail": f"Applied GPT industry description ({settings.openai_model}) from website URL.",
+    }

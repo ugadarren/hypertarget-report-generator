@@ -7,7 +7,12 @@ from uuid import uuid4
 
 from app.config import get_settings
 from app.models import CompanyInput, Report
-from app.services.llm_enrichment import detect_sector_with_llm, enrich_sector_profile, extract_contacts_with_llm
+from app.services.llm_enrichment import (
+    detect_sector_with_llm,
+    enrich_sector_profile,
+    extract_contacts_with_llm,
+    generate_industry_description_with_llm,
+)
 from app.services.data_validation import validate_data_files
 from app.services.location import assess_locations, load_county_tiers, load_county_tier_history, load_credit_policy
 from app.services.opportunity_engine import build_credit_assessments
@@ -229,6 +234,14 @@ class ReportService:
         return sector
 
     def _enrich_sector(self, payload: CompanyInput, web, sector):
+        industry_description, description_log = generate_industry_description_with_llm(
+            website=str(payload.website) if payload.website else None,
+        )
+        web.source_log.append(description_log)
+        if industry_description:
+            sector.company_description = industry_description
+        else:
+            sector.company_description = None
         enriched_sector, enrichment_log = enrich_sector_profile(
             company_name=payload.company_name,
             website=str(payload.website) if payload.website else None,
@@ -239,6 +252,10 @@ class ReportService:
         )
         if enriched_sector:
             sector = enriched_sector
+            if industry_description:
+                sector.company_description = industry_description
+            else:
+                sector.company_description = None
         web.source_log.append(enrichment_log)
         return sector
 
@@ -327,7 +344,7 @@ class ReportService:
             "sector_candidates": sector.sector_candidates,
             "sector_needs_review": sector.sector_needs_review,
             "company_description": sector.company_description
-            or f"{payload.company_name} appears to operate in the {sector.sector.lower()} industry.",
+            or "Company description unavailable; analyst review required.",
             "sector_summary": sector.sector_summary
             or "Industry classification is based on website language and should be analyst-reviewed.",
             "ga_jtc_intro": apply_report_copy_template(report_copy.get("ga_jtc_intro", ""), company_name=payload.company_name),
