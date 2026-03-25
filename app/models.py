@@ -53,6 +53,9 @@ class CreditAssessment(BaseModel):
 class SectorProfile(BaseModel):
     sector_key: str = "unknown"
     sector: str
+    sector_family: str | None = None
+    sector_candidates: list[dict[str, Any]] = Field(default_factory=list)
+    sector_needs_review: bool = False
     company_description: str | None = None
     sector_summary: str | None = None
     rd_focus_examples: list[str] = Field(default_factory=list)

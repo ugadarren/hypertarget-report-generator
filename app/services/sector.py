@@ -1,9 +1,29 @@
 from __future__ import annotations
 
 import re
+from typing import Any
 
 from app.data.industry_profiles import INDUSTRY_KEYWORDS, SECTOR_DETAILS
 from app.models import SectorProfile
+
+
+SECTOR_FAMILIES = {
+    "electrical_contracting": "construction_trades",
+    "construction": "construction_trades",
+    "manufacturing": "industrial_manufacturing",
+    "automotive": "industrial_manufacturing",
+    "food_processing": "industrial_manufacturing",
+    "energy_utilities": "industrial_infrastructure",
+    "telecommunications": "industrial_infrastructure",
+    "healthcare": "healthcare_life_sciences",
+    "software": "software_technology",
+    "logistics": "logistics_distribution",
+    "staffing_recruiting": "business_services",
+}
+
+
+def sector_family(sector_key: str) -> str:
+    return SECTOR_FAMILIES.get(sector_key, "other")
 
 
 def keyword_sector_scores(website_text: str, snippets: list[str] | None = None) -> list[tuple[str, int]]:
@@ -20,6 +40,35 @@ def keyword_sector_scores(website_text: str, snippets: list[str] | None = None) 
                 score += 3 if " " in needle or len(needle) >= 10 else 2
         scores[sector_key] = score
     return sorted(scores.items(), key=lambda item: item[1], reverse=True)
+
+
+def sector_candidates(website_text: str, snippets: list[str] | None = None) -> list[dict[str, Any]]:
+    ranked = keyword_sector_scores(website_text, snippets)
+    candidates: list[dict[str, Any]] = []
+    for sector_key, score in ranked:
+        candidates.append(
+            {
+                "sector_key": sector_key,
+                "sector_label": str(SECTOR_DETAILS.get(sector_key, {}).get("label", sector_key)),
+                "family": sector_family(sector_key),
+                "score": score,
+            }
+        )
+    return candidates
+
+
+def sector_needs_review(candidates: list[dict[str, Any]]) -> bool:
+    if not candidates:
+        return True
+    top = candidates[0]
+    runner_up = candidates[1] if len(candidates) > 1 else None
+    top_score = int(top.get("score", 0) or 0)
+    runner_score = int(runner_up.get("score", 0) or 0) if runner_up else 0
+    if top_score < 6:
+        return True
+    if runner_up and top_score - runner_score <= 2:
+        return True
+    return False
 
 
 def _default_retraining_rows(software: list[str], equipment: list[str]) -> list[dict[str, object]]:
@@ -130,6 +179,7 @@ def _build_sector_profile(sector_key: str, source_text: str, company_name: str |
     return SectorProfile(
         sector_key=sector_key,
         sector=details["label"],
+        sector_family=sector_family(sector_key),
         company_description=company_description,
         sector_summary=sector_summary,
         rd_focus_examples=rd_examples,
@@ -231,6 +281,8 @@ def infer_sector_from_text(
     haystack = f"{(website_text or '').lower()} {' '.join(snippets or []).lower()}"
     if not haystack.strip():
         profile = _build_sector_profile("software", "No website text available; defaulted sector.", company_name=company_name)
+        profile.sector_candidates = []
+        profile.sector_needs_review = True
         profile.company_description = _client_ready_description(
             company_name=company_name,
             sector_label=profile.sector,
@@ -240,8 +292,10 @@ def infer_sector_from_text(
         profile.sector_summary = "Industry classification could not be inferred from website text and should be manually reviewed."
         return profile
 
-    ranked = keyword_sector_scores(website_text, snippets)
-    best_key, best_score = ranked[0] if ranked else ("software", 0)
+    candidates = sector_candidates(website_text, snippets)
+    best = candidates[0] if candidates else {"sector_key": "software", "score": 0}
+    best_key = str(best.get("sector_key", "software"))
+    best_score = int(best.get("score", 0) or 0)
     source_text = f"Keyword-based website sector inference (score={best_score})"
     profile = _build_sector_profile(best_key, source_text, company_name=company_name)
     profile.company_description = _client_ready_description(
@@ -250,6 +304,17 @@ def infer_sector_from_text(
         snippets=snippets,
         website_text=website_text,
     )
-    profile.sector_summary = "Industry classification was inferred from website content and should be analyst-reviewed."
-    profile.evidence.extend([f"{k}:{v}" for k, v in ranked[:3]])
+    if sector_needs_review(candidates):
+        profile.sector_summary = "Industry classification is ambiguous based on website content and should be manually reviewed."
+        profile.sector_needs_review = True
+    else:
+        profile.sector_summary = "Industry classification was inferred from website content and should be analyst-reviewed."
+        profile.sector_needs_review = False
+    profile.sector_candidates = candidates[:3]
+    profile.evidence.extend(
+        [
+            f"{item['sector_key']}:{item['score']}:{item['family']}"
+            for item in candidates[:3]
+        ]
+    )
     return profile

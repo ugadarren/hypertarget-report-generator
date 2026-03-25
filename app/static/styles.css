@@ -103,6 +103,13 @@ button {
   background: #edf8f1;
 }
 
+.review-note {
+  padding: 0.7rem 0.85rem;
+  border: 1px solid #ead7aa;
+  background: #fff7e6;
+  border-radius: 10px;
+}
+
 .grid { display: grid; gap: 1rem; }
 .grid.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 

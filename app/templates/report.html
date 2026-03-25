@@ -22,8 +22,34 @@
       <section class="doc-section">
         <h2>Company Sector and Industry Analysis</h2>
         <p><strong>Detected Sector:</strong> {{ report.narrative.get('sector_title', report.sector_profile.sector) }}</p>
+        {% if report.narrative.get('sector_family') %}
+        <p><strong>Sector Family:</strong> {{ report.narrative.get('sector_family', '')|replace('_', ' ')|title }}</p>
+        {% endif %}
+        {% if report.narrative.get('sector_needs_review') %}
+        <p class="review-note"><strong>Manual Override Suggested:</strong> Sector evidence is ambiguous, so this classification should be reviewed before relying on downstream credit logic.</p>
+        {% endif %}
         <p><strong>Company Description:</strong> {{ report.narrative.get('company_description', '') }}</p>
         <p>{{ report.narrative.get('sector_summary', '') }}</p>
+        {% if report.narrative.get('sector_candidates') %}
+        <table>
+          <thead>
+            <tr>
+              <th>Sector Candidate</th>
+              <th>Family</th>
+              <th>Score</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for candidate in report.narrative.get('sector_candidates', []) %}
+            <tr>
+              <td>{{ candidate.sector_label }}</td>
+              <td>{{ candidate.family|replace('_', ' ')|title }}</td>
+              <td>{{ candidate.score }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% endif %}
       </section>
 
       <section class="doc-section credit-section">

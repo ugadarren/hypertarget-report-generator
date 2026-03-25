@@ -8,7 +8,7 @@ import httpx
 from app.config import get_settings
 from app.data.industry_profiles import SECTOR_DETAILS
 from app.models import SectorProfile
-from app.services.sector import keyword_sector_scores
+from app.services.sector import keyword_sector_scores, sector_candidates, sector_family, sector_needs_review
 
 
 def _clip(text: str, max_chars: int) -> str:
@@ -162,6 +162,14 @@ def detect_sector_with_llm(
     research_text: str,
 ) -> tuple[dict[str, str] | None, dict[str, str]]:
     settings = get_settings()
+    candidates = sector_candidates(research_text, snippets)
+    top_candidates = candidates[:3]
+    if sector_needs_review(candidates):
+        return None, {
+            "source": "sector",
+            "type": "review_required",
+            "detail": "Sector evidence is ambiguous; keyword candidates are too weak or too close to force a GPT classification.",
+        }
     if not settings.gpt_enabled:
         return None, {
             "source": "openai",
@@ -169,13 +177,21 @@ def detect_sector_with_llm(
             "detail": "OPENAI_API_KEY not configured; used keyword-based sector inference.",
         }
 
-    choices = [{"key": key, "label": str(value.get("label", key))} for key, value in SECTOR_DETAILS.items()]
+    choices = [
+        {
+            "key": str(item["sector_key"]),
+            "label": str(item["sector_label"]),
+            "family": str(item["family"]),
+            "score": int(item["score"]),
+        }
+        for item in top_candidates
+    ]
     prompt = f"""
-Classify the company's primary industry sector from the allowed options only.
+Classify the company's primary industry sector from the allowed candidate options only.
 
 Company: {company_name}
 Website: {website or "Not provided"}
-Allowed sectors JSON:
+Allowed candidate sectors JSON:
 {json.dumps(choices)}
 
 Website snippets:
@@ -222,6 +238,17 @@ Return JSON only:
             "detail": (
                 f"LLM sector detection rejected by keyword sanity check. "
                 f"LLM={sector_label} ({sector_key}); keyword evidence favored {top_label} ({top_keyword_key})."
+            ),
+        }
+    top_family = sector_family(top_keyword_key) if top_keyword_key else ""
+    detected_family = sector_family(sector_key)
+    if top_family and detected_family != top_family and top_keyword_score >= 10:
+        return None, {
+            "source": "openai",
+            "type": "llm_error",
+            "detail": (
+                f"LLM sector detection rejected by family guardrail. "
+                f"LLM={sector_label} ({detected_family}); keyword family favored {top_family}."
             ),
         }
     return (

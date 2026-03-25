@@ -13,7 +13,7 @@ from app.services.location import assess_locations, load_county_tiers, load_coun
 from app.services.opportunity_engine import build_credit_assessments
 from app.services.policy_meta import load_policy_versions
 from app.services.report_copy import apply_report_copy_template, load_report_copy
-from app.services.sector import infer_sector_from_text, resolve_sector_from_input
+from app.services.sector import infer_sector_from_text, resolve_sector_from_input, sector_candidates, sector_family
 from app.services.web_research import scrape_website
 
 
@@ -193,6 +193,7 @@ class ReportService:
                 }
             )
         else:
+            candidates = sector_candidates(web.text, web.snippets)
             detected, detect_log = detect_sector_with_llm(
                 company_name=payload.company_name,
                 website=str(payload.website) if payload.website else None,
@@ -205,6 +206,9 @@ class ReportService:
                     sector_input=detected["sector_key"],
                     company_name=payload.company_name,
                 )
+                sector.sector_family = sector_family(detected["sector_key"])
+                sector.sector_candidates = candidates[:3]
+                sector.sector_needs_review = False
                 sector.evidence.append(f"LLM detection reason: {detected.get('reason', '')}")
             else:
                 sector = infer_sector_from_text(
@@ -316,6 +320,9 @@ class ReportService:
 
         return {
             "sector_title": sector.sector,
+            "sector_family": sector.sector_family or "",
+            "sector_candidates": sector.sector_candidates,
+            "sector_needs_review": sector.sector_needs_review,
             "company_description": sector.company_description
             or f"{payload.company_name} appears to operate in the {sector.sector.lower()} industry.",
             "sector_summary": sector.sector_summary

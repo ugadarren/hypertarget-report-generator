@@ -13,7 +13,7 @@ from app.services.location import (
     load_credit_policy,
 )
 from app.services.opportunity_engine import _is_rd_core_sector, build_credit_assessments
-from app.services.sector import keyword_sector_scores
+from app.services.sector import keyword_sector_scores, sector_candidates, sector_needs_review
 
 
 class TierLogicTests(unittest.TestCase):
@@ -137,6 +137,28 @@ class SectorInferenceTests(unittest.TestCase):
             ["healthcare systems", "medical supplies", "diagnostic products"],
         )
         self.assertEqual(ranked[0][0], "healthcare")
+
+    def test_sector_needs_review_when_scores_are_too_close(self):
+        candidates = sector_candidates(
+            "The company provides software, analytics, logistics, supply chain, and cloud services.",
+            ["platform", "distribution", "analytics"],
+        )
+        self.assertTrue(sector_needs_review(candidates))
+
+    def test_sector_needs_review_when_evidence_is_weak(self):
+        candidates = sector_candidates(
+            "Welcome to our company website.",
+            ["contact us", "home"],
+        )
+        self.assertTrue(sector_needs_review(candidates))
+
+    def test_sector_candidates_include_family_metadata(self):
+        candidates = sector_candidates(
+            "Medical supply distribution and diagnostic products for healthcare providers.",
+            ["healthcare systems", "medical products"],
+        )
+        self.assertEqual(candidates[0]["sector_key"], "healthcare")
+        self.assertEqual(candidates[0]["family"], "healthcare_life_sciences")
 
 
 if __name__ == "__main__":
