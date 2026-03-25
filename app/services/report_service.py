@@ -8,17 +8,16 @@ from uuid import uuid4
 from app.config import get_settings
 from app.models import CompanyInput, Report
 from app.services.llm_enrichment import (
-    detect_sector_with_llm,
+    detect_industry_overview_with_llm,
     enrich_sector_profile,
     extract_contacts_with_llm,
-    generate_industry_description_with_llm,
 )
 from app.services.data_validation import validate_data_files
 from app.services.location import assess_locations, load_county_tiers, load_county_tier_history, load_credit_policy
 from app.services.opportunity_engine import build_credit_assessments
 from app.services.policy_meta import load_policy_versions
 from app.services.report_copy import apply_report_copy_template, load_report_copy
-from app.services.sector import infer_sector_from_text, resolve_sector_from_input, sector_candidates, sector_family
+from app.services.sector import infer_sector_from_text, resolve_sector_from_input, sector_family
 from app.services.web_research import scrape_website
 
 
@@ -198,24 +197,19 @@ class ReportService:
                 }
             )
         else:
-            candidates = sector_candidates(web.text, web.snippets, web.weighted_texts)
-            detected, detect_log = detect_sector_with_llm(
-                company_name=payload.company_name,
-                website=str(payload.website) if payload.website else None,
-                snippets=web.snippets,
-                weighted_texts=web.weighted_texts,
-                research_text=web.text,
-            )
+            detected, detect_log = detect_industry_overview_with_llm(website=str(payload.website) if payload.website else None)
             web.source_log.append(detect_log)
             if detected:
                 sector = resolve_sector_from_input(
-                    sector_input=detected["sector_key"],
+                    sector_input=detected["industry"],
                     company_name=payload.company_name,
                 )
-                sector.sector_family = sector_family(detected["sector_key"])
-                sector.sector_candidates = candidates[:3]
+                sector.sector = detected["industry"]
+                sector.sector_family = sector_family(sector.sector_key)
+                sector.sector_candidates = []
                 sector.sector_needs_review = False
-                sector.evidence.append(f"LLM detection reason: {detected.get('reason', '')}")
+                sector.company_description = detected["description"]
+                sector.evidence.append(f"GPT-detected industry: {detected['industry']}")
             else:
                 sector = infer_sector_from_text(
                     website_text=web.text,
@@ -223,7 +217,6 @@ class ReportService:
                     weighted_texts=web.weighted_texts,
                     company_name=payload.company_name,
                 )
-                sector.sector_candidates = candidates[:3]
                 web.source_log.append(
                     {
                         "source": "sector",
@@ -234,14 +227,6 @@ class ReportService:
         return sector
 
     def _enrich_sector(self, payload: CompanyInput, web, sector):
-        industry_description, description_log = generate_industry_description_with_llm(
-            website=str(payload.website) if payload.website else None,
-        )
-        web.source_log.append(description_log)
-        if industry_description:
-            sector.company_description = industry_description
-        else:
-            sector.company_description = None
         enriched_sector, enrichment_log = enrich_sector_profile(
             company_name=payload.company_name,
             website=str(payload.website) if payload.website else None,
@@ -252,10 +237,6 @@ class ReportService:
         )
         if enriched_sector:
             sector = enriched_sector
-            if industry_description:
-                sector.company_description = industry_description
-            else:
-                sector.company_description = None
         web.source_log.append(enrichment_log)
         return sector
 

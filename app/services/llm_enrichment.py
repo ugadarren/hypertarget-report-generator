@@ -8,7 +8,7 @@ import httpx
 from app.config import get_settings
 from app.data.industry_profiles import SECTOR_DETAILS
 from app.models import SectorProfile
-from app.services.sector import keyword_sector_scores, sector_candidates, sector_family, sector_needs_review
+from app.services.sector import keyword_sector_scores, sector_family
 
 
 def _clip(text: str, max_chars: int) -> str:
@@ -154,99 +154,54 @@ def _post_openai(prompt: str, system_prompt: str, model: str, api_key: str, time
         return None, str(exc)
 
 
-def detect_sector_with_llm(
+def detect_industry_overview_with_llm(
     *,
-    company_name: str,
     website: str | None,
-    snippets: list[str],
-    weighted_texts: dict[str, str] | None,
-    research_text: str,
 ) -> tuple[dict[str, str] | None, dict[str, str]]:
     settings = get_settings()
-    curated_evidence = {
-        "title": (weighted_texts or {}).get("title", ""),
-        "meta": (weighted_texts or {}).get("meta", ""),
-        "headings": (weighted_texts or {}).get("headings", ""),
-        "paragraphs": (weighted_texts or {}).get("paragraphs", ""),
-    }
     if not settings.gpt_enabled:
         return None, {
             "source": "openai",
             "type": "llm",
-            "detail": "OPENAI_API_KEY not configured; used keyword-based sector inference.",
+            "detail": "OPENAI_API_KEY not configured; GPT industry detection unavailable.",
+        }
+    if not website:
+        return None, {
+            "source": "openai",
+            "type": "llm",
+            "detail": "No website provided; GPT industry detection unavailable.",
         }
 
-    choices = [{"key": key, "label": str(value.get("label", key))} for key, value in SECTOR_DETAILS.items()]
     prompt = f"""
-Classify the company's primary industry sector from the allowed sector options.
-Focus on what the company actually sells, manufactures, distributes, or delivers.
-Do not classify based on generic internal technology, software tools, or digital transformation language unless the company itself is fundamentally a software/technology business.
-
-Company: {company_name}
-Website: {website or "Not provided"}
-Allowed sectors JSON:
-{json.dumps(choices)}
-
-Curated company-description evidence:
-{json.dumps(curated_evidence, ensure_ascii=True)}
-
-Website snippets:
-{_clip(chr(10).join(snippets[:10]), 8000)}
+Detect what industry this company is in and give me two sentences about it: {website}
 
 Return JSON only:
 {{
-  "sector_key": "one of allowed keys",
-  "sector_label": "matching label",
-  "reason": "1-2 sentence rationale"
+  "industry": "industry or sector name",
+  "description": "exactly two client-ready sentences"
 }}
 """
     data, err = _post_openai(
         prompt,
-        "You are an industry classification analyst. Output valid JSON only.",
+        "You are a precise business analyst. Use the website to identify the company's actual industry and write exactly two client-ready sentences. Output valid JSON only.",
         model=settings.openai_model,
         api_key=settings.openai_api_key,
         timeout_seconds=settings.openai_timeout_seconds,
     )
     if err or not data:
-        return None, {"source": "openai", "type": "llm_error", "detail": f"LLM sector detection failed: {err or 'unknown'}"}
+        return None, {"source": "openai", "type": "llm_error", "detail": f"LLM industry detection failed: {err or 'unknown'}"}
 
     parsed = _extract_json(_response_output_text(data))
     if not parsed:
-        return None, {"source": "openai", "type": "llm_error", "detail": "LLM sector detection returned non-JSON output."}
+        return None, {"source": "openai", "type": "llm_error", "detail": "LLM industry detection returned non-JSON output."}
 
-    sector_key = str(parsed.get("sector_key", "")).strip()
-    if sector_key not in SECTOR_DETAILS:
-        return None, {"source": "openai", "type": "llm_error", "detail": f"LLM sector key not recognized: {sector_key or 'empty'}"}
-
-    sector_label = str(parsed.get("sector_label", "")).strip() or str(SECTOR_DETAILS[sector_key].get("label", sector_key))
-    reason = str(parsed.get("reason", "")).strip() or "Sector selected from website evidence."
-    keyword_ranked = keyword_sector_scores(research_text, snippets, weighted_texts)
-    top_keyword_key, top_keyword_score = keyword_ranked[0] if keyword_ranked else ("", 0)
-    detected_keyword_score = next((score for key, score in keyword_ranked if key == sector_key), 0)
-    if top_keyword_key and top_keyword_key != sector_key and top_keyword_score >= max(12, detected_keyword_score + 10):
-        top_label = str(SECTOR_DETAILS.get(top_keyword_key, {}).get("label", top_keyword_key))
-        return None, {
-            "source": "openai",
-            "type": "llm_error",
-            "detail": (
-                f"LLM sector detection rejected by keyword sanity check. "
-                f"LLM={sector_label} ({sector_key}); keyword evidence favored {top_label} ({top_keyword_key})."
-            ),
-        }
-    top_family = sector_family(top_keyword_key) if top_keyword_key else ""
-    detected_family = sector_family(sector_key)
-    if top_family and detected_family != top_family and top_keyword_score >= 16:
-        return None, {
-            "source": "openai",
-            "type": "llm_error",
-            "detail": (
-                f"LLM sector detection rejected by family guardrail. "
-                f"LLM={sector_label} ({detected_family}); keyword family favored {top_family}."
-            ),
-        }
+    industry = str(parsed.get("industry", "")).strip()
+    description = _clip(str(parsed.get("description", "")).strip(), 1200)
+    if not industry or not description:
+        return None, {"source": "openai", "type": "llm_error", "detail": "LLM industry detection returned incomplete output."}
     return (
-        {"sector_key": sector_key, "sector_label": sector_label, "reason": reason},
-        {"source": "openai", "type": "llm", "detail": f"Detected sector {sector_label} ({sector_key}). {reason}"},
+        {"industry": industry, "description": description},
+        {"source": "openai", "type": "llm", "detail": f"Detected industry {industry} from website and generated a two-sentence overview."},
     )
 
 
