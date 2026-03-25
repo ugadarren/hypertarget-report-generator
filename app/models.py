@@ -64,6 +64,7 @@ class SectorProfile(BaseModel):
     rd_rationale: str | None = None
     rd_rows: list[dict[str, Any]] = Field(default_factory=list)
     investment_credit_applicable: bool = False
+    investment_credit_rationale: str | None = None
     retraining_rows: list[dict[str, Any]] = Field(default_factory=list)
     software_systems: list[str] = Field(default_factory=list)
     equipment: list[str] = Field(default_factory=list)

@@ -155,27 +155,6 @@ class WordExportService:
         self._add_paragraph_break(document)
         self._add_paragraph(document, report.narrative.get("sector_summary", ""))
 
-        self._add_section_heading(document, "Contact Intelligence (Public Sources)")
-        self._add_paragraph(document, report.narrative.get("contact_intro", ""))
-        self._add_table(
-            document,
-            ["Name", "Title", "Email", "Confidence", "Source"],
-            [
-                [
-                    contact.name or "-",
-                    contact.title or "-",
-                    contact.email or "-",
-                    f"{round((contact.confidence or 0) * 100)}%",
-                    contact.source_url or "-",
-                ]
-                for contact in report.contact_intelligence
-            ],
-            OxmlElement,
-            qn,
-            RGBColor,
-            Pt,
-        )
-
         self._add_section_heading(document, "GA Job Tax Credit")
         self._add_paragraph(document, report.narrative.get("ga_jtc_intro", ""))
         self._add_paragraph_break(document)
@@ -206,15 +185,26 @@ class WordExportService:
             RGBColor,
             Pt,
         )
-        prior_histories = [
-            " | ".join(loc.tier_history[1:])
-            for loc in report.locations
-            if len(loc.tier_history) > 1
-        ]
-        self._add_paragraph(
-            document,
-            f"Prior Year Tier History: {' || '.join(prior_histories) if prior_histories else 'Unavailable'}",
-        )
+        prior_years = [str(year) for year in report.narrative.get("ga_jtc_prior_years", [])]
+        prior_rows = list(report.narrative.get("ga_jtc_prior_rows", []))
+        if prior_years and prior_rows:
+            self._add_table(
+                document,
+                ["Addresses Prior Year Tiers"] + prior_years,
+                [
+                    [str(row.get("address", ""))] + [str(tier) for tier in row.get("tiers", [])]
+                    for row in prior_rows
+                ],
+                OxmlElement,
+                qn,
+                RGBColor,
+                Pt,
+            )
+        else:
+            self._add_paragraph(
+                document,
+                "Prior Year Tier History: No prior-year tier history available for the entered location(s).",
+            )
 
         self._add_section_heading(document, "Georgia Retraining Tax Credit")
         intro_lead = str(report.narrative.get("retraining_intro_lead", ""))

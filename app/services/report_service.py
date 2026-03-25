@@ -6,7 +6,7 @@ from pathlib import Path
 from uuid import uuid4
 
 from app.config import get_settings
-from app.models import CompanyInput, Report
+from app.models import CompanyInput, Report, SectorProfile
 from app.services.llm_enrichment import (
     detect_industry_overview_with_llm,
     enrich_sector_profile,
@@ -17,7 +17,7 @@ from app.services.location import assess_locations, load_county_tiers, load_coun
 from app.services.opportunity_engine import build_credit_assessments
 from app.services.policy_meta import load_policy_versions
 from app.services.report_copy import apply_report_copy_template, load_report_copy
-from app.services.sector import infer_sector_from_text, resolve_sector_from_input, sector_family
+from app.services.sector import infer_sector_from_text
 from app.services.web_research import scrape_website
 
 
@@ -155,6 +155,30 @@ def _build_prior_tier_matrix(locations: list) -> tuple[list[str], list[dict]]:
     return years, rows
 
 
+def _direct_sector_profile(sector_label: str, company_description: str | None = None) -> SectorProfile:
+    label = str(sector_label or "").strip() or "Unknown Industry"
+    return SectorProfile(
+        sector_key="gpt_direct",
+        sector=label,
+        sector_family=None,
+        sector_candidates=[],
+        sector_needs_review=False,
+        company_description=company_description,
+        sector_summary=None,
+        rd_focus_examples=[],
+        rd_feasibility="possible",
+        rd_confidence=0.5,
+        rd_rationale=None,
+        rd_rows=[],
+        investment_credit_applicable=False,
+        investment_credit_rationale=None,
+        retraining_rows=[],
+        software_systems=[],
+        equipment=[],
+        evidence=[],
+    )
+
+
 class ReportService:
     def __init__(self, data_dir: Path, reports_dir: Path):
         self.data_dir = data_dir
@@ -188,7 +212,7 @@ class ReportService:
 
     def _resolve_sector(self, payload: CompanyInput, web):
         if payload.sector and payload.sector.strip():
-            sector = resolve_sector_from_input(sector_input=payload.sector, company_name=payload.company_name)
+            sector = _direct_sector_profile(payload.sector)
             web.source_log.append(
                 {
                     "source": "sector",
@@ -197,18 +221,18 @@ class ReportService:
                 }
             )
         else:
-            detected, detect_log = detect_industry_overview_with_llm(website=str(payload.website) if payload.website else None)
+            detected, detect_log = detect_industry_overview_with_llm(
+                website=str(payload.website) if payload.website else None,
+                snippets=web.snippets,
+                weighted_texts=web.weighted_texts,
+            )
             web.source_log.append(detect_log)
             if detected:
-                sector = resolve_sector_from_input(
-                    sector_input=detected["industry"],
-                    company_name=payload.company_name,
+                sector = _direct_sector_profile(
+                    detected["industry"],
+                    company_description=detected["company_description"],
                 )
-                sector.sector = detected["industry"]
-                sector.sector_family = sector_family(sector.sector_key)
-                sector.sector_candidates = []
-                sector.sector_needs_review = False
-                sector.company_description = detected["description"]
+                sector.sector_summary = detected["industry_description"]
                 sector.evidence.append(f"GPT-detected industry: {detected['industry']}")
             else:
                 sector = infer_sector_from_text(

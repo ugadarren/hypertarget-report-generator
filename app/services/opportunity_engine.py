@@ -17,12 +17,7 @@ EXPANSION_PATTERNS = [
 
 
 def _is_rd_core_sector(sector: SectorProfile) -> bool:
-    # User policy: confidence should be conservative unless the company is
-    # in manufacturing or the physical/computer/engineering sciences space.
-    core_keys = {"manufacturing"}
-    if sector.sector_key in core_keys:
-        return True
-
+    # GPT-derived feasibility should lead. This remains only as a fallback guardrail.
     label = (sector.sector or "").lower()
     core_terms = [
         "manufactur",
@@ -145,15 +140,14 @@ def build_credit_assessments(
 
     if not sector.investment_credit_applicable:
         investment_status = "unlikely"
-        investment_rationale = (
-            "Georgia Investment Tax Credit is generally targeted to qualifying manufacturing/telecommunications "
-            "investments; detected industry does not appear to meet this program scope."
+        investment_rationale = sector.investment_credit_rationale or (
+            "Detected industry does not appear to align with the general scope of the Georgia Investment Tax Credit."
         )
         investment_triggers = [f"Detected industry: {sector.sector}"]
         investment_confidence = 0.9
     else:
         investment_status = "likely" if expansion_signals and has_target_tier else "possible"
-        investment_rationale = (
+        investment_rationale = sector.investment_credit_rationale or (
             "Expansion/capital signals combined with county tier may support Georgia investment incentives."
         )
         investment_triggers = expansion_signals[:5] or ["Need verification of recent capital investment in GA"]

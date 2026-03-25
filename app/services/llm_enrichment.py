@@ -8,7 +8,6 @@ import httpx
 from app.config import get_settings
 from app.data.industry_profiles import SECTOR_DETAILS
 from app.models import SectorProfile
-from app.services.sector import keyword_sector_scores, sector_family
 
 
 def _clip(text: str, max_chars: int) -> str:
@@ -107,6 +106,36 @@ def _build_rd_rows(examples: list[str]) -> list[dict[str, Any]]:
     return rows
 
 
+def _build_retraining_rows_from_lists(software: list[str], equipment: list[str]) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    software_chunks = [software[i : i + 4] for i in range(0, min(len(software), 8), 4)]
+    equipment_chunks = [equipment[i : i + 4] for i in range(0, min(len(equipment), 8), 4)]
+    software_labels = ["Operations Software", "Workflow / Analytics Software"]
+    equipment_labels = ["Operational Equipment", "Testing / Field Equipment"]
+
+    for idx, chunk in enumerate(software_chunks):
+        if not chunk:
+            continue
+        rows.append(
+            {
+                "type": "Software",
+                "category": software_labels[min(idx, len(software_labels) - 1)],
+                "applicable_programs": chunk,
+            }
+        )
+    for idx, chunk in enumerate(equipment_chunks):
+        if not chunk:
+            continue
+        rows.append(
+            {
+                "type": "Equipment",
+                "category": equipment_labels[min(idx, len(equipment_labels) - 1)],
+                "applicable_programs": chunk,
+            }
+        )
+    return rows
+
+
 def _rd_default_by_sector(sector_key: str) -> tuple[str, float]:
     likely = {"manufacturing", "software", "automotive", "telecommunications", "food_processing"}
     unlikely = {"logistics", "staffing_recruiting"}
@@ -157,6 +186,8 @@ def _post_openai(prompt: str, system_prompt: str, model: str, api_key: str, time
 def detect_industry_overview_with_llm(
     *,
     website: str | None,
+    snippets: list[str] | None = None,
+    weighted_texts: dict[str, str] | None = None,
 ) -> tuple[dict[str, str] | None, dict[str, str]]:
     settings = get_settings()
     if not settings.gpt_enabled:
@@ -172,18 +203,35 @@ def detect_industry_overview_with_llm(
             "detail": "No website provided; GPT industry detection unavailable.",
         }
 
+    weighted_texts = weighted_texts or {}
+    curated_evidence = {
+        "title": _clip(str(weighted_texts.get("title", "")).strip(), 300),
+        "meta": _clip(str(weighted_texts.get("meta", "")).strip(), 500),
+        "headings": _clip(str(weighted_texts.get("headings", "")).strip(), 1000),
+        "paragraphs": _clip(str(weighted_texts.get("paragraphs", "")).strip(), 2500),
+        "snippets": [str(s).strip() for s in (snippets or []) if str(s).strip()][:10],
+    }
+
     prompt = f"""
-Detect what industry this company is in and give me two sentences about it: {website}
+Detect what industry this company is in and give me two sentences about it.
+
+Company website: {website}
+
+Use the website evidence below as the basis for your answer. Focus on what the company actually sells, manufactures, distributes, or services for customers. Ignore generic internal technology language, boilerplate, legal text, and unrelated brand pages.
+
+Website evidence:
+{json.dumps(curated_evidence, ensure_ascii=True, indent=2)}
 
 Return JSON only:
 {{
-  "industry": "industry or sector name",
-  "description": "exactly two client-ready sentences"
+  "industry": "concise industry or sector name",
+  "company_description": "exactly two client-ready sentences about what the company does and who it serves",
+  "industry_description": "1-2 client-ready sentences about the industry itself"
 }}
 """
     data, err = _post_openai(
         prompt,
-        "You are a precise business analyst. Use the website to identify the company's actual industry and write exactly two client-ready sentences. Output valid JSON only.",
+        "You are a precise business analyst. Identify the company's actual customer-facing industry from the supplied website evidence. Write one company-specific two-sentence description and a separate 1-2 sentence industry description. Keep both consistent with the detected industry. Output valid JSON only.",
         model=settings.openai_model,
         api_key=settings.openai_api_key,
         timeout_seconds=settings.openai_timeout_seconds,
@@ -196,12 +244,17 @@ Return JSON only:
         return None, {"source": "openai", "type": "llm_error", "detail": "LLM industry detection returned non-JSON output."}
 
     industry = str(parsed.get("industry", "")).strip()
-    description = _clip(str(parsed.get("description", "")).strip(), 1200)
-    if not industry or not description:
+    company_description = _clip(str(parsed.get("company_description", "")).strip(), 1200)
+    industry_description = _clip(str(parsed.get("industry_description", "")).strip(), 1200)
+    if not industry or not company_description or not industry_description:
         return None, {"source": "openai", "type": "llm_error", "detail": "LLM industry detection returned incomplete output."}
     return (
-        {"industry": industry, "description": description},
-        {"source": "openai", "type": "llm", "detail": f"Detected industry {industry} from website and generated a two-sentence overview."},
+        {
+            "industry": industry,
+            "company_description": company_description,
+            "industry_description": industry_description,
+        },
+        {"source": "openai", "type": "llm", "detail": f"Detected industry {industry} from website and generated company and industry descriptions."},
     )
 
 
@@ -270,13 +323,16 @@ Return JSON only with this exact schema:
       "activities": ["3-5 likely activities for this company"]
     }}
   ],
-  "rd_focus_examples": ["6-10 examples of likely qualifying R&D activities for this company"]
+  "rd_focus_examples": ["6-10 examples of likely qualifying R&D activities for this company"],
+  "investment_credit_applicable": true,
+  "investment_credit_rationale": "1-2 sentence rationale for whether GA Investment Tax Credit generally fits this industry"
 }}
 
 Rules:
 - For retraining_rows, include exactly 2 software categories and 2 equipment categories.
 - For rd_rows, include at least 3 and at most 4 categories.
 - Keep descriptions client-facing and specific to the company.
+- Set investment_credit_applicable to true only if this industry generally aligns with GA Investment Tax Credit program scope.
 """
     data, err = _post_openai(
         prompt,
@@ -321,23 +377,29 @@ Rules:
     except Exception:
         rd_confidence = default_rd_conf
     rd_confidence = max(0.0, min(1.0, rd_confidence))
+    investment_credit_applicable = bool(parsed.get("investment_credit_applicable", base_sector.investment_credit_applicable))
+    investment_credit_rationale = _clip(str(parsed.get("investment_credit_rationale", "")).strip(), 1200) or base_sector.investment_credit_rationale
 
     enriched = SectorProfile(
         sector_key=base_sector.sector_key,
         sector=base_sector.sector,
+        sector_family=base_sector.sector_family,
+        sector_candidates=list(base_sector.sector_candidates),
+        sector_needs_review=base_sector.sector_needs_review,
         company_description=_clip(str(parsed.get("company_description", "")).strip(), 1200) or base_sector.company_description,
         sector_summary=_clip(str(parsed.get("sector_summary", "")).strip(), 1200) or base_sector.sector_summary,
-        rd_focus_examples=rd_examples or base_sector.rd_focus_examples,
+        rd_focus_examples=rd_examples,
         rd_feasibility=rd_feasibility,
         rd_confidence=rd_confidence,
         rd_rationale=_clip(str(parsed.get("rd_rationale", "")).strip(), 1200)
         or base_sector.rd_rationale
         or f"Estimated feasibility for {base_sector.sector.lower()} industry.",
-        rd_rows=rd_rows or base_sector.rd_rows or _build_rd_rows(rd_examples or base_sector.rd_focus_examples),
-        investment_credit_applicable=base_sector.investment_credit_applicable,
-        retraining_rows=retraining_rows or base_sector.retraining_rows,
-        software_systems=software or base_sector.software_systems,
-        equipment=equipment or base_sector.equipment,
+        rd_rows=rd_rows or _build_rd_rows(rd_examples),
+        investment_credit_applicable=investment_credit_applicable,
+        investment_credit_rationale=investment_credit_rationale,
+        retraining_rows=retraining_rows or _build_retraining_rows_from_lists(software, equipment),
+        software_systems=software,
+        equipment=equipment,
         evidence=list(base_sector.evidence)
         + [
             f"LLM-enriched using model {settings.openai_model}",
@@ -441,51 +503,4 @@ Rules:
         "source": "openai",
         "type": "llm",
         "detail": f"Applied GPT contact extraction ({settings.openai_model}) from public website evidence.",
-    }
-
-
-def generate_industry_description_with_llm(
-    *,
-    website: str | None,
-) -> tuple[str | None, dict[str, str]]:
-    settings = get_settings()
-    if not settings.gpt_enabled:
-        return None, {
-            "source": "openai",
-            "type": "llm",
-            "detail": "OPENAI_API_KEY not configured; used fallback company description.",
-        }
-    if not website:
-        return None, {
-            "source": "openai",
-            "type": "llm",
-            "detail": "No website provided; used fallback company description.",
-        }
-
-    prompt = f"Detect what industry this company is in and give me two sentences about it: {website}"
-    data, err = _post_openai(
-        prompt,
-        "You are a precise business analyst. Respond with exactly two client-ready sentences and no bullet points or labels.",
-        model=settings.openai_model,
-        api_key=settings.openai_api_key,
-        timeout_seconds=settings.openai_timeout_seconds,
-    )
-    if err or not data:
-        return None, {
-            "source": "openai",
-            "type": "llm_error",
-            "detail": f"LLM industry description failed: {err or 'unknown'}",
-        }
-
-    text = _clip(_response_output_text(data).strip(), 1200)
-    if not text:
-        return None, {
-            "source": "openai",
-            "type": "llm_error",
-            "detail": "LLM industry description returned empty output.",
-        }
-    return text, {
-        "source": "openai",
-        "type": "llm",
-        "detail": f"Applied GPT industry description ({settings.openai_model}) from website URL.",
     }
