@@ -13,6 +13,7 @@ from app.services.location import (
     load_credit_policy,
 )
 from app.services.opportunity_engine import _is_rd_core_sector, build_credit_assessments
+from app.services.sector import keyword_sector_scores
 
 
 class TierLogicTests(unittest.TestCase):
@@ -127,6 +128,15 @@ class RdConservatismTests(unittest.TestCase):
         self.assertTrue(_is_rd_core_sector(self._sector("manufacturing", "Manufacturing")))
         self.assertTrue(_is_rd_core_sector(self._sector("software", "Software and Technology")))
         self.assertFalse(_is_rd_core_sector(self._sector("logistics", "Logistics and Distribution")))
+
+
+class SectorInferenceTests(unittest.TestCase):
+    def test_medical_supply_keywords_rank_healthcare_above_electrical(self):
+        ranked = keyword_sector_scores(
+            "ASP Global is a strategic sourcing partner for healthcare providers and distributors of medical products, blood collection, diagnostic, and exam gloves.",
+            ["healthcare systems", "medical supplies", "diagnostic products"],
+        )
+        self.assertEqual(ranked[0][0], "healthcare")
 
 
 if __name__ == "__main__":

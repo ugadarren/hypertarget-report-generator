@@ -6,6 +6,22 @@ from app.data.industry_profiles import INDUSTRY_KEYWORDS, SECTOR_DETAILS
 from app.models import SectorProfile
 
 
+def keyword_sector_scores(website_text: str, snippets: list[str] | None = None) -> list[tuple[str, int]]:
+    haystack = f"{(website_text or '').lower()} {' '.join(snippets or []).lower()}"
+    scores: dict[str, int] = {}
+    for sector_key, keywords in INDUSTRY_KEYWORDS.items():
+        score = 0
+        for keyword in keywords:
+            needle = keyword.lower().strip()
+            if not needle:
+                continue
+            if needle in haystack:
+                # Longer, more specific phrases should outweigh generic single-word hits.
+                score += 3 if " " in needle or len(needle) >= 10 else 2
+        scores[sector_key] = score
+    return sorted(scores.items(), key=lambda item: item[1], reverse=True)
+
+
 def _default_retraining_rows(software: list[str], equipment: list[str]) -> list[dict[str, object]]:
     rows: list[dict[str, object]] = []
     soft_chunks = [software[i : i + 4] for i in range(0, min(len(software), 12), 4)]
@@ -224,15 +240,7 @@ def infer_sector_from_text(
         profile.sector_summary = "Industry classification could not be inferred from website text and should be manually reviewed."
         return profile
 
-    scores: dict[str, int] = {}
-    for sector_key, keywords in INDUSTRY_KEYWORDS.items():
-        score = 0
-        for keyword in keywords:
-            if keyword.lower() in haystack:
-                score += 2
-        scores[sector_key] = score
-
-    ranked = sorted(scores.items(), key=lambda item: item[1], reverse=True)
+    ranked = keyword_sector_scores(website_text, snippets)
     best_key, best_score = ranked[0] if ranked else ("software", 0)
     source_text = f"Keyword-based website sector inference (score={best_score})"
     profile = _build_sector_profile(best_key, source_text, company_name=company_name)

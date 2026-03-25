@@ -8,6 +8,7 @@ import httpx
 from app.config import get_settings
 from app.data.industry_profiles import SECTOR_DETAILS
 from app.models import SectorProfile
+from app.services.sector import keyword_sector_scores
 
 
 def _clip(text: str, max_chars: int) -> str:
@@ -210,6 +211,19 @@ Return JSON only:
 
     sector_label = str(parsed.get("sector_label", "")).strip() or str(SECTOR_DETAILS[sector_key].get("label", sector_key))
     reason = str(parsed.get("reason", "")).strip() or "Sector selected from website evidence."
+    keyword_ranked = keyword_sector_scores(research_text, snippets)
+    top_keyword_key, top_keyword_score = keyword_ranked[0] if keyword_ranked else ("", 0)
+    detected_keyword_score = next((score for key, score in keyword_ranked if key == sector_key), 0)
+    if top_keyword_key and top_keyword_key != sector_key and top_keyword_score >= max(8, detected_keyword_score + 6):
+        top_label = str(SECTOR_DETAILS.get(top_keyword_key, {}).get("label", top_keyword_key))
+        return None, {
+            "source": "openai",
+            "type": "llm_error",
+            "detail": (
+                f"LLM sector detection rejected by keyword sanity check. "
+                f"LLM={sector_label} ({sector_key}); keyword evidence favored {top_label} ({top_keyword_key})."
+            ),
+        }
     return (
         {"sector_key": sector_key, "sector_label": sector_label, "reason": reason},
         {"source": "openai", "type": "llm", "detail": f"Detected sector {sector_label} ({sector_key}). {reason}"},
