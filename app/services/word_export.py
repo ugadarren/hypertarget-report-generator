@@ -23,6 +23,24 @@ class WordExportService:
         cleaned = re.sub(r"[^A-Za-z0-9]+", "_", value).strip("_")
         return cleaned[:80] or "report"
 
+    def _safe_display_name(self, value: str) -> str:
+        cleaned = re.sub(r'[<>:"/\\\\|?*]+', "", str(value or "")).strip()
+        cleaned = re.sub(r"\s+", " ", cleaned)
+        return cleaned[:120] or "Report"
+
+    def _unique_output_path(self, preferred_name: str) -> Path:
+        candidate = self.exports_dir / preferred_name
+        if not candidate.exists():
+            return candidate
+        stem = candidate.stem
+        suffix = candidate.suffix
+        counter = 2
+        while True:
+            alt = self.exports_dir / f"{stem} ({counter}){suffix}"
+            if not alt.exists():
+                return alt
+            counter += 1
+
     def _docx_imports(self):
         try:
             from docx import Document
@@ -344,8 +362,9 @@ class WordExportService:
         return document
 
     def export_report(self, report: Report, include_confidence: bool = False) -> Path:
-        filename = f"{self._safe_slug(report.company_name)}_{report.id}.docx"
-        output_path = self.exports_dir / filename
+        report_date = report.created_at.strftime("%d-%m-%Y")
+        filename = f"{self._safe_display_name(report.company_name)} Incentive Summary - {report_date}.docx"
+        output_path = self._unique_output_path(filename)
         document = self._build_document(report, include_confidence=include_confidence)
         document.save(output_path)
         if self.google_drive.is_enabled():
