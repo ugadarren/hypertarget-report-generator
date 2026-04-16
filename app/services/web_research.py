@@ -347,7 +347,9 @@ def _fetch_and_parse(url: str, session: requests.Session, timeout_seconds: float
     except Exception as exc:
         return None, "", f"Page fetch failed: {exc}"
 
-    soup = BeautifulSoup(response.text, "lxml")
+    content_type = str(response.headers.get("Content-Type", "")).lower()
+    parser = "xml" if any(token in content_type for token in ("xml", "rss", "atom")) else "lxml"
+    soup = BeautifulSoup(response.text, parser)
     for tag in soup(["script", "style", "noscript"]):
         tag.decompose()
 
