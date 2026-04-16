@@ -134,7 +134,7 @@ async def admin_exports(request: Request):
             {
                 "name": path.name,
                 "size_kb": round(stat.st_size / 1024, 1),
-                "modified_at": datetime.fromtimestamp(stat.st_mtime).strftime("%Y-%m-%d %H:%M:%S"),
+                "modified_at": datetime.fromtimestamp(stat.st_mtime).strftime("%m-%d-%Y %I:%M:%S %p"),
             }
         )
     return templates.TemplateResponse("admin_exports.html", {"request": request, "files": files, "app_version": _app_version()})
