@@ -1,11 +1,14 @@
 from __future__ import annotations
 
+import logging
 import os
 import re
 from pathlib import Path
 
 from app.models import Report
 from app.services.google_drive import GoogleDriveUploadService
+
+logger = logging.getLogger(__name__)
 
 
 class WordExportService:
@@ -348,10 +351,17 @@ class WordExportService:
         if self.google_drive.is_enabled():
             metadata_path = self.upload_metadata_path(output_path.name)
             try:
+                logger.info("google_drive_upload: starting file=%s", output_path.name)
                 result = self.google_drive.upload_docx(output_path)
                 if result:
+                    logger.info(
+                        "google_drive_upload: success file=%s file_id=%s",
+                        output_path.name,
+                        result.file_id,
+                    )
                     self.google_drive.write_upload_metadata(metadata_path, result)
             except Exception as exc:
+                logger.exception("google_drive_upload: failed file=%s error=%s", output_path.name, exc)
                 self.google_drive.write_upload_error(metadata_path, str(exc))
         return output_path
 
