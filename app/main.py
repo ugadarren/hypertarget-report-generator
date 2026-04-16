@@ -120,6 +120,8 @@ async def status():
         "llm_contact_enrichment_enabled": settings.enable_llm_contact_enrichment,
         "openai_model": settings.openai_model,
         "arcgis_viewer_url": settings.arcgis_viewer_url,
+        "google_drive_enabled": settings.google_drive_enabled,
+        "google_drive_folder_id": settings.google_drive_folder_id,
     }
 
 
@@ -130,14 +132,25 @@ async def admin_exports(request: Request):
     files = []
     for path in sorted(exports_dir.glob("*.docx"), key=lambda p: p.stat().st_mtime, reverse=True):
         stat = path.stat()
+        drive_meta = word_export.get_upload_metadata(path.name) or {}
         files.append(
             {
                 "name": path.name,
                 "size_kb": round(stat.st_size / 1024, 1),
                 "modified_at": datetime.fromtimestamp(stat.st_mtime).strftime("%m-%d-%Y %I:%M:%S %p"),
+                "drive_uploaded": bool(drive_meta.get("file_id")),
+                "drive_url": drive_meta.get("web_view_link", ""),
             }
         )
-    return templates.TemplateResponse("admin_exports.html", {"request": request, "files": files, "app_version": _app_version()})
+    return templates.TemplateResponse(
+        "admin_exports.html",
+        {
+            "request": request,
+            "files": files,
+            "app_version": _app_version(),
+            "google_drive_enabled": get_settings().google_drive_enabled,
+        },
+    )
 
 
 @app.get("/admin/batches", response_class=HTMLResponse)

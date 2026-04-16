@@ -5,12 +5,16 @@ import re
 from pathlib import Path
 
 from app.models import Report
+from app.services.google_drive import GoogleDriveUploadService
 
 
 class WordExportService:
     def __init__(self, exports_dir: Path):
         self.exports_dir = exports_dir
         self.exports_dir.mkdir(parents=True, exist_ok=True)
+        self.upload_meta_dir = self.exports_dir / ".upload_meta"
+        self.upload_meta_dir.mkdir(parents=True, exist_ok=True)
+        self.google_drive = GoogleDriveUploadService()
 
     def _safe_slug(self, value: str) -> str:
         cleaned = re.sub(r"[^A-Za-z0-9]+", "_", value).strip("_")
@@ -312,7 +316,6 @@ class WordExportService:
                 RGBColor,
                 Pt,
             )
-        self._add_paragraph(document, str(report.narrative.get("investment_signals_summary", "")))
         self._add_table(
             document,
             ["County", "Tier", "Investment Tax Credit %"],
@@ -335,25 +338,6 @@ class WordExportService:
         self._add_paragraph_break(document)
         self._add_paragraph(document, report.narrative.get("costseg_note", ""))
 
-        self._add_section_heading(document, "Policy Version")
-        self._add_paragraph(document, f"Policy Year: {report.narrative.get('policy_year', 'unspecified')}")
-        county_meta = report.narrative.get("policy_versions", {}).get("county_tiers", {})
-        credit_meta = report.narrative.get("policy_versions", {}).get("credit_policy", {})
-        self._add_paragraph(
-            document,
-            (
-                f"County Tier Source: {county_meta.get('source', 'app/data/ga_county_tiers.json')} "
-                f"({county_meta.get('effective_year', 'unspecified')})"
-            ),
-        )
-        self._add_paragraph(
-            document,
-            (
-                f"Credit Policy Source: {credit_meta.get('source', 'app/data/ga_credit_policy.json')} "
-                f"({credit_meta.get('effective_year', 'unspecified')})"
-            ),
-        )
-
         return document
 
     def export_report(self, report: Report, include_confidence: bool = False) -> Path:
@@ -361,4 +345,18 @@ class WordExportService:
         output_path = self.exports_dir / filename
         document = self._build_document(report, include_confidence=include_confidence)
         document.save(output_path)
+        if self.google_drive.is_enabled():
+            metadata_path = self.upload_metadata_path(output_path.name)
+            try:
+                result = self.google_drive.upload_docx(output_path)
+                if result:
+                    self.google_drive.write_upload_metadata(metadata_path, result)
+            except Exception as exc:
+                self.google_drive.write_upload_error(metadata_path, str(exc))
         return output_path
+
+    def upload_metadata_path(self, filename: str) -> Path:
+        return self.upload_meta_dir / f"{filename}.json"
+
+    def get_upload_metadata(self, filename: str) -> dict | None:
+        return self.google_drive.read_upload_metadata(self.upload_metadata_path(filename))

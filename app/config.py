@@ -18,6 +18,9 @@ class Settings:
     openai_timeout_seconds: float
     arcgis_viewer_url: str
     enable_llm_contact_enrichment: bool
+    google_drive_folder_id: str
+    google_drive_service_account_file: str
+    google_drive_service_account_json: str
 
     @property
     def auth_enabled(self) -> bool:
@@ -26,6 +29,13 @@ class Settings:
     @property
     def gpt_enabled(self) -> bool:
         return bool(self.openai_api_key)
+
+    @property
+    def google_drive_enabled(self) -> bool:
+        return bool(
+            self.google_drive_folder_id
+            and (self.google_drive_service_account_json or self.google_drive_service_account_file)
+        )
 
 
 def get_settings() -> Settings:
@@ -46,4 +56,7 @@ def get_settings() -> Settings:
         openai_timeout_seconds=timeout,
         arcgis_viewer_url=os.getenv("ARCGIS_VIEWER_URL", DEFAULT_ARCGIS_VIEWER_URL).strip() or DEFAULT_ARCGIS_VIEWER_URL,
         enable_llm_contact_enrichment=enable_contact_llm,
+        google_drive_folder_id=os.getenv("GOOGLE_DRIVE_FOLDER_ID", "").strip(),
+        google_drive_service_account_file=os.getenv("GOOGLE_DRIVE_SERVICE_ACCOUNT_FILE", "").strip(),
+        google_drive_service_account_json=os.getenv("GOOGLE_DRIVE_SERVICE_ACCOUNT_JSON", "").strip(),
     )

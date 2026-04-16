@@ -3,3 +3,6 @@ __pycache__/
 .venv/
 reports/*.json
 reports/exports/*.docx
+reports/exports/.upload_meta/
+reports/batches/
+hypertarget-*.json

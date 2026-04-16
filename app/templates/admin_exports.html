@@ -16,6 +16,11 @@
           <a class="button-link" href="/admin/batches">Open Batch Upload</a>
         </p>
         <p>Generated DOCX reports are retained on disk with unique file names tied to each report id, so later runs do not overwrite prior exports.</p>
+        {% if google_drive_enabled %}
+        <p>Google Drive upload is enabled for new exports. When available, use the Drive column to open the uploaded file in your company folder.</p>
+        {% else %}
+        <p>Google Drive upload is not enabled yet for this running app instance.</p>
+        {% endif %}
       </header>
       <section class="doc-section">
         <table>
@@ -25,12 +30,13 @@
               <th>Size (KB)</th>
               <th>Modified</th>
               <th>Download</th>
+              <th>Drive</th>
             </tr>
           </thead>
           <tbody>
             {% if not files %}
             <tr>
-              <td colspan="4">No DOCX exports saved yet.</td>
+              <td colspan="5">No DOCX exports saved yet.</td>
             </tr>
             {% endif %}
             {% for file in files %}
@@ -39,6 +45,13 @@
               <td>{{ file.size_kb }}</td>
               <td>{{ file.modified_at }}</td>
               <td><a class="button-link" href="/admin/exports/{{ file.name }}">Download</a></td>
+              <td>
+                {% if file.drive_uploaded and file.drive_url %}
+                <a class="button-link" href="{{ file.drive_url }}" target="_blank" rel="noopener noreferrer">Open in Drive</a>
+                {% else %}
+                -
+                {% endif %}
+              </td>
             </tr>
             {% endfor %}
           </tbody>
