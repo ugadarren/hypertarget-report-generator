@@ -236,6 +236,13 @@ th, td {
   border-left: 1px solid #fff;
 }
 
+.app-version {
+  margin-top: 1rem;
+  color: #6a7b86;
+  font-size: 0.9rem;
+  text-align: right;
+}
+
 
 .explorer-page {
   display: grid;

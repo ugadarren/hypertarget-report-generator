@@ -2,11 +2,12 @@ from __future__ import annotations
 
 import json
 import os
+import subprocess
 from pathlib import Path
 from datetime import datetime
 import secrets
 
-from fastapi import FastAPI, Form, HTTPException, Request
+from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import Response
 from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
@@ -15,6 +16,7 @@ from fastapi.templating import Jinja2Templates
 from app.models import AddressInput, CompanyInput, GenerateResponse, SectorCorrectionInput
 from app.config import get_settings
 from app.services.designation_map import ArcGISDesignationService
+from app.services.batch_service import BatchReportService
 from app.services.feedback_service import FeedbackService
 from app.services.report_service import ReportService
 from app.services.word_export import WordExportService
@@ -25,10 +27,36 @@ service = ReportService(data_dir=BASE_DIR / "data", reports_dir=BASE_DIR.parent 
 word_export = WordExportService(exports_dir=BASE_DIR.parent / "reports" / "exports")
 designation_service = ArcGISDesignationService()
 feedback_service = FeedbackService(reports_dir=BASE_DIR.parent / "reports")
+batch_service = BatchReportService(reports_dir=BASE_DIR.parent / "reports", report_service=service, word_export=word_export)
 
 app = FastAPI(title="HyperTarget Incentive Report Generator", version="0.1.0")
 app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
+
+
+def _app_version() -> str:
+    env_candidates = [
+        os.getenv("RENDER_GIT_COMMIT", "").strip(),
+        os.getenv("GIT_COMMIT", "").strip(),
+        os.getenv("COMMIT_SHA", "").strip(),
+    ]
+    for value in env_candidates:
+        if value:
+            return value[:7]
+    try:
+        result = subprocess.run(
+            ["git", "rev-parse", "--short", "HEAD"],
+            cwd=str(BASE_DIR.parent),
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        sha = result.stdout.strip()
+        if sha:
+            return sha
+    except Exception:
+        pass
+    return "unknown"
 
 
 @app.middleware("http")
@@ -74,7 +102,7 @@ async def basic_auth_guard(request: Request, call_next):
 
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
+    return templates.TemplateResponse("index.html", {"request": request, "app_version": _app_version()})
 
 
 @app.get("/healthz")
@@ -86,6 +114,7 @@ async def healthz():
 async def status():
     settings = get_settings()
     return {
+        "app_version": _app_version(),
         "auth_enabled": settings.auth_enabled,
         "gpt_enabled": settings.gpt_enabled,
         "llm_contact_enrichment_enabled": settings.enable_llm_contact_enrichment,
@@ -108,7 +137,91 @@ async def admin_exports(request: Request):
                 "modified_at": datetime.fromtimestamp(stat.st_mtime).strftime("%Y-%m-%d %H:%M:%S"),
             }
         )
-    return templates.TemplateResponse("admin_exports.html", {"request": request, "files": files})
+    return templates.TemplateResponse("admin_exports.html", {"request": request, "files": files, "app_version": _app_version()})
+
+
+@app.get("/admin/batches", response_class=HTMLResponse)
+async def admin_batches(request: Request):
+    return templates.TemplateResponse(
+        "admin_batches.html",
+        {
+            "request": request,
+            "app_version": _app_version(),
+            "batch": None,
+            "error": "",
+        },
+    )
+
+
+@app.post("/admin/batches", response_class=HTMLResponse)
+async def run_admin_batch(
+    request: Request,
+    file: UploadFile = File(...),
+    include_confidence: bool = Form(False),
+):
+    if not file.filename or not file.filename.lower().endswith(".csv"):
+        return templates.TemplateResponse(
+            "admin_batches.html",
+            {
+                "request": request,
+                "app_version": _app_version(),
+                "batch": None,
+                "error": "Upload a CSV file.",
+            },
+            status_code=400,
+        )
+
+    try:
+        file_bytes = await file.read()
+        batch = batch_service.run_csv_batch(
+            file_bytes=file_bytes,
+            filename=file.filename,
+            include_confidence=include_confidence,
+        )
+    except Exception as exc:
+        return templates.TemplateResponse(
+            "admin_batches.html",
+            {
+                "request": request,
+                "app_version": _app_version(),
+                "batch": None,
+                "error": str(exc),
+            },
+            status_code=400,
+        )
+
+    return RedirectResponse(url=f"/admin/batches/{batch.batch_id}", status_code=303)
+
+
+@app.get("/admin/batches/{batch_id}", response_class=HTMLResponse)
+async def admin_batch_detail(request: Request, batch_id: str):
+    batch = batch_service.get_batch(batch_id)
+    if not batch:
+        raise HTTPException(status_code=404, detail="Batch not found")
+    return templates.TemplateResponse(
+        "admin_batches.html",
+        {
+            "request": request,
+            "app_version": _app_version(),
+            "batch": batch,
+            "error": "",
+        },
+    )
+
+
+@app.get("/admin/batches/{batch_id}/files/{filename}")
+async def admin_batch_download(batch_id: str, filename: str):
+    path = batch_service.get_batch_file(batch_id, filename)
+    if not path:
+        raise HTTPException(status_code=404, detail="Batch file not found")
+    media_type = "application/octet-stream"
+    if path.suffix.lower() == ".zip":
+        media_type = "application/zip"
+    elif path.suffix.lower() == ".csv":
+        media_type = "text/csv"
+    elif path.suffix.lower() == ".docx":
+        media_type = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    return FileResponse(path=path, filename=path.name, media_type=media_type)
 
 
 @app.get("/admin/config", response_class=HTMLResponse)
@@ -119,6 +232,7 @@ async def admin_config(request: Request):
         "admin_config.html",
         {
             "request": request,
+            "app_version": _app_version(),
             "report_copy_json": json.dumps(json.loads(report_copy_path.read_text()), indent=2),
             "web_research_policy_json": json.dumps(json.loads(web_policy_path.read_text()), indent=2),
             "saved": request.query_params.get("saved") == "1",
@@ -141,6 +255,7 @@ async def save_admin_config(
             "admin_config.html",
             {
                 "request": request,
+                "app_version": _app_version(),
                 "report_copy_json": report_copy_json,
                 "web_research_policy_json": web_research_policy_json,
                 "saved": False,
@@ -154,6 +269,7 @@ async def save_admin_config(
             "admin_config.html",
             {
                 "request": request,
+                "app_version": _app_version(),
                 "report_copy_json": report_copy_json,
                 "web_research_policy_json": web_research_policy_json,
                 "saved": False,
@@ -166,6 +282,7 @@ async def save_admin_config(
             "admin_config.html",
             {
                 "request": request,
+                "app_version": _app_version(),
                 "report_copy_json": report_copy_json,
                 "web_research_policy_json": web_research_policy_json,
                 "saved": False,
@@ -181,6 +298,7 @@ async def save_admin_config(
             "admin_config.html",
             {
                 "request": request,
+                "app_version": _app_version(),
                 "report_copy_json": report_copy_json,
                 "web_research_policy_json": web_research_policy_json,
                 "saved": False,
@@ -228,6 +346,7 @@ async def designation_explorer(request: Request):
         "designation_explorer.html",
         {
             "request": request,
+            "app_version": _app_version(),
             "google_maps_api_key": os.getenv("GOOGLE_MAPS_API_KEY", ""),
         },
     )
@@ -273,7 +392,7 @@ async def report_page(request: Request, report_id: str):
     report = service.get_report(report_id)
     if not report:
         raise HTTPException(status_code=404, detail="Report not found")
-    return templates.TemplateResponse("report.html", {"request": request, "report": report})
+    return templates.TemplateResponse("report.html", {"request": request, "report": report, "app_version": _app_version()})
 
 
 @app.get("/api/reports/{report_id}")

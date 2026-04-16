@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Batch Reports</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <main class="container report-doc">
+      <header>
+        <h1>Admin - Batch Report Generator</h1>
+        <p>
+          <a class="button-link" href="/">Back to Generator</a>
+          <a class="button-link" href="/admin/exports">Open Admin Exports</a>
+        </p>
+      </header>
+
+      <section class="doc-section">
+        <h2>Upload CSV</h2>
+        <p>Upload a CSV with at least <strong>company_name</strong>. Recommended columns: <strong>company_name</strong>, <strong>website</strong>, <strong>address</strong> or <strong>address_1</strong>, and optional <strong>sector</strong>, <strong>notes</strong>.</p>
+        <p>You can separate multiple addresses with additional columns like <strong>address_2</strong>, <strong>address_3</strong>, or a single <strong>address</strong> column using <strong>|</strong> as a separator.</p>
+
+        {% if error %}
+        <p class="review-note"><strong>Batch error:</strong> {{ error }}</p>
+        {% endif %}
+
+        <form class="card subtle" method="post" action="/admin/batches" enctype="multipart/form-data">
+          <label>CSV File
+            <input type="file" name="file" accept=".csv" required />
+          </label>
+          <label class="download-toggle">
+            <input type="checkbox" name="include_confidence" value="true" />
+            Include confidence scoring in Word exports
+          </label>
+          <button type="submit">Run Batch</button>
+        </form>
+      </section>
+
+      {% if batch %}
+      <section class="doc-section">
+        <h2>Batch Summary</h2>
+        <p><strong>Batch ID:</strong> {{ batch.batch_id }}</p>
+        <p><strong>Source File:</strong> {{ batch.input_filename }}</p>
+        <p><strong>Created:</strong> {{ batch.created_at }}</p>
+        <p><strong>Total Rows:</strong> {{ batch.total_rows }} | <strong>Completed:</strong> {{ batch.success_count }} | <strong>Failed:</strong> {{ batch.failure_count }}</p>
+        <p>
+          {% if batch.zip_filename %}
+          <a class="button-link" href="/admin/batches/{{ batch.batch_id }}/files/{{ batch.zip_filename }}">Download DOCX ZIP</a>
+          {% endif %}
+          {% if batch.summary_csv_filename %}
+          <a class="button-link" href="/admin/batches/{{ batch.batch_id }}/files/{{ batch.summary_csv_filename }}">Download Summary CSV</a>
+          {% endif %}
+        </p>
+      </section>
+
+      <section class="doc-section">
+        <table>
+          <thead>
+            <tr>
+              <th>Row</th>
+              <th>Company</th>
+              <th>Status</th>
+              <th>Report</th>
+              <th>DOCX</th>
+              <th>Error</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in batch.rows %}
+            <tr>
+              <td>{{ row.row_number }}</td>
+              <td>{{ row.company_name or '-' }}</td>
+              <td>{{ row.status }}</td>
+              <td>
+                {% if row.report_url %}
+                <a href="{{ row.report_url }}">Open</a>
+                {% else %}
+                -
+                {% endif %}
+              </td>
+              <td>
+                {% if row.docx_filename %}
+                <a href="/admin/batches/{{ batch.batch_id }}/files/{{ row.docx_filename }}">Download</a>
+                {% else %}
+                -
+                {% endif %}
+              </td>
+              <td>{{ row.error or '-' }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </section>
+      {% endif %}
+
+      <p class="app-version">Version: {{ app_version }}</p>
+    </main>
+  </body>
+</html>
