@@ -226,10 +226,6 @@ class ArcGISIncentiveLookup:
 
     def _match_layer_type(self, title: str) -> str | None:
         name = title.lower()
-        if "tier" in name and ("job" in name or "tax" in name or "county" in name):
-            return "tier"
-        if "lower 40" in name or "lower40" in name:
-            return "tier1_lower_40"
         if "military" in name:
             return "military_zone"
         if "ldct" in name or "less developed" in name:
@@ -346,48 +342,6 @@ class ArcGISIncentiveLookup:
         return output, diagnostics
 
 
-def _extract_tier_from_attrs(attrs: dict[str, str]) -> str | None:
-    for key, value in attrs.items():
-        key_l = str(key).lower()
-        if "tier" in key_l and value not in (None, ""):
-            return _normalize_tier_value(str(value))
-    return None
-
-
-def _extract_tier_label_from_attrs(attrs: dict[str, str]) -> str | None:
-    for key, value in attrs.items():
-        if value in (None, ""):
-            continue
-        key_l = str(key).lower()
-        val = str(value).strip()
-        if "tier" in key_l:
-            return val
-    for key, value in attrs.items():
-        if value in (None, ""):
-            continue
-        key_l = str(key).lower()
-        val = str(value).strip()
-        if "designation" in key_l and ("tier" in val.lower() or "lower 40" in val.lower() or "bottom 40" in val.lower()):
-            return val
-    return None
-
-
-def _extract_lower_40_from_attrs(attrs: dict[str, str]) -> bool | None:
-    for key, value in attrs.items():
-        if value in (None, ""):
-            continue
-        key_l = str(key).lower()
-        val = str(value).lower()
-        if "lower" in key_l and "40" in key_l:
-            if val in {"1", "true", "yes", "y"}:
-                return True
-            if val in {"0", "false", "no", "n"}:
-                return False
-        if "lower 40" in val or "lower40" in val:
-            return True
-    return None
-
-
 def _extract_county_from_attrs(attrs: dict[str, str]) -> str | None:
     for key, value in attrs.items():
         if value in (None, ""):
@@ -445,6 +399,28 @@ def _tier_from_county(county: str | None, tier_map: dict[str, str]) -> str | Non
     return _normalize_tier_value(value)
 
 
+def _tier_label_from_county(county: str | None, tier_map: dict[str, str]) -> str | None:
+    if not county:
+        return None
+    raw = str(tier_map.get(_normalize_county_key(county), "")).strip()
+    if not raw:
+        return None
+    raw_l = raw.lower()
+    if "lower 40" in raw_l or "lower40" in raw_l or "bottom 40" in raw_l or "bottom40" in raw_l:
+        return "Tier 1 Lower 40"
+    normalized = _normalize_tier_value(raw)
+    if normalized in {"1", "2", "3", "4"}:
+        return f"Tier {normalized}"
+    return raw
+
+
+def _county_tier_is_lower_40(county: str | None, tier_map: dict[str, str]) -> bool:
+    if not county:
+        return False
+    raw = str(tier_map.get(_normalize_county_key(county), "")).strip().lower()
+    return any(token in raw for token in ("lower 40", "lower40", "bottom 40", "bottom40"))
+
+
 def _normalize_tier_value(value: str | None) -> str | None:
     if value is None:
         return None
@@ -491,7 +467,7 @@ def _build_tier_history(
     county: str | None,
     tier_history_by_year: dict[str, dict[str, str]] | None,
     reference_year: int | None,
-    years_back: int = 5,
+    years_back: int = 4,
 ) -> list[str]:
     if not county or not tier_history_by_year:
         return []
@@ -548,14 +524,11 @@ def _county_from_census_geography(address: str) -> str | None:
 
 
 def _format_special_designation(
-    tier1_lower_40: bool | None,
     military_zone: bool | None,
     ldct: bool | None,
     opportunity_zone: bool | None,
 ) -> str:
     tags: list[str] = []
-    if tier1_lower_40:
-        tags.append("Tier 1 Lower 40")
     if military_zone:
         tags.append("Military Zone")
     if ldct:
@@ -705,11 +678,11 @@ def assess_locations(
         lon = float(geo["lon"]) if geo.get("lon") else None
 
         tier = _tier_from_county(county, tier_map)
-        tier_label_raw = None
+        tier1_lower_40 = _county_tier_is_lower_40(county, tier_map)
+        tier_label_raw = _tier_label_from_county(county, tier_map)
         military_zone = None
         ldct = None
         opportunity_zone = None
-        tier1_lower_40 = None
         zone_details: dict[str, dict] = {}
 
         evidence = ["OpenStreetMap Nominatim geocoding"]
@@ -725,19 +698,6 @@ def assess_locations(
             diagnostics.extend(arcgis_diag)
             if zone_details:
                 evidence.append("ArcGIS DCA map spatial intersection")
-
-            if zone_details.get("tier"):
-                tier = _extract_tier_from_attrs(zone_details["tier"]) or tier
-                tier_label_raw = _extract_tier_label_from_attrs(zone_details["tier"]) or tier_label_raw
-                lower_40 = _extract_lower_40_from_attrs(zone_details["tier"])
-                if lower_40 is not None:
-                    tier1_lower_40 = lower_40
-                if not county:
-                    county = _extract_county_from_attrs(zone_details["tier"]) or county
-            if zone_details.get("tier1_lower_40"):
-                tier1_lower_40 = True
-                if not tier:
-                    tier = "1"
             if not county and zone_details.get("military_zone"):
                 county = _extract_county_from_attrs(zone_details["military_zone"]) or county
             if not county and zone_details.get("ldct"):
@@ -748,6 +708,10 @@ def assess_locations(
             military_zone = bool(zone_details.get("military_zone")) if "military_zone" in zone_details else None
             ldct = bool(zone_details.get("ldct")) if "ldct" in zone_details else None
             opportunity_zone = bool(zone_details.get("opportunity_zone")) if "opportunity_zone" in zone_details else None
+
+        tier = _tier_from_county(county, tier_map)
+        tier1_lower_40 = _county_tier_is_lower_40(county, tier_map)
+        tier_label_raw = _tier_label_from_county(county, tier_map)
 
         if county and tier and "ArcGIS DCA map spatial intersection" not in evidence:
             evidence.append("Matched county to GA tier map")
@@ -772,7 +736,7 @@ def assess_locations(
             county=county,
             tier_history_by_year=tier_history_by_year,
             reference_year=reference_year,
-            years_back=5,
+            years_back=4,
         )
 
         threshold, credit_amount = _estimate_jtc_benefit(
@@ -798,7 +762,6 @@ def assess_locations(
                 opportunity_zone=opportunity_zone,
                 tier1_lower_40=tier1_lower_40,
                 special_designation=_format_special_designation(
-                    tier1_lower_40,
                     military_zone,
                     ldct,
                     opportunity_zone,

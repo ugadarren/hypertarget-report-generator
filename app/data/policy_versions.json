@@ -1,7 +1,7 @@
 {
-  "policy_year": "2025",
+  "policy_year": "2026",
   "county_tiers": {
-    "effective_year": "2025",
+    "effective_year": "2026",
     "source": "/Users/Darren1/Library/CloudStorage/GoogleDrive-dmiller@eagleadvisorypartners.com/Shared drives/EAP Shared Drive/Incentive Data and Materials/GA JTC/JTC Data Reference Material/ga_county_tiers_history_source.csv",
     "source_date": "2026-01-01",
     "notes": "Update annually when DCA releases revised county tier rankings."
