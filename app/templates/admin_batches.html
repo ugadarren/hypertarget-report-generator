@@ -18,8 +18,8 @@
 
       <section class="doc-section">
         <h2>Upload CSV</h2>
-        <p>Upload a CSV with at least <strong>company_name</strong>. Recommended columns: <strong>company_name</strong>, <strong>website</strong>, <strong>address</strong> or <strong>address_1</strong>, and optional <strong>sector</strong>, <strong>notes</strong>.</p>
-        <p>You can separate multiple addresses with additional columns like <strong>address_2</strong>, <strong>address_3</strong>, or a single <strong>address</strong> column using <strong>|</strong> as a separator.</p>
+        <p>Upload one row per company. Required column: <strong>company_name</strong>. Recommended columns: <strong>website</strong>, <strong>address_1</strong> through <strong>address_5</strong>, and optional <strong>sector</strong>, <strong>notes</strong>.</p>
+        <p>You can also use a single <strong>address</strong> column with multiple addresses separated by <strong>|</strong>. The batch uploader supports a maximum of <strong>5 addresses per company row</strong>.</p>
 
         {% if error %}
         <p class="review-note"><strong>Batch error:</strong> {{ error }}</p>

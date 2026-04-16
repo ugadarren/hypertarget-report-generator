@@ -29,6 +29,8 @@ class BatchRunResult:
 
 
 class BatchReportService:
+    MAX_ADDRESSES_PER_COMPANY = 5
+
     def __init__(self, reports_dir: Path, report_service: ReportService, word_export: WordExportService):
         self.reports_dir = reports_dir
         self.report_service = report_service
@@ -80,6 +82,9 @@ class BatchReportService:
             "address4": "address_4",
             "streetaddress4": "address_4",
             "mailingaddress4": "address_4",
+            "address5": "address_5",
+            "streetaddress5": "address_5",
+            "mailingaddress5": "address_5",
         }
         if simplified in aliases:
             return aliases[simplified]
@@ -112,6 +117,10 @@ class BatchReportService:
         for address in addresses:
             if address and address not in deduped:
                 deduped.append(address)
+        if len(deduped) > self.MAX_ADDRESSES_PER_COMPANY:
+            raise ValueError(
+                f"A maximum of {self.MAX_ADDRESSES_PER_COMPANY} addresses is supported per company row."
+            )
         return deduped
 
     def _payload_from_row(self, row: dict[str, str]) -> CompanyInput:
