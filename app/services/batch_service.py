@@ -42,7 +42,50 @@ class BatchReportService:
         return cleaned[:80] or "company"
 
     def _normalize_header(self, value: str) -> str:
-        return (value or "").strip().lower().lstrip("\ufeff")
+        raw = (value or "").strip().lower().lstrip("\ufeff")
+        simplified = "".join(ch for ch in raw if ch.isalnum())
+        if not simplified:
+            return ""
+
+        aliases = {
+            "company": "company_name",
+            "companyname": "company_name",
+            "business": "company_name",
+            "businessname": "company_name",
+            "legalname": "company_name",
+            "name": "company_name",
+            "website": "website",
+            "websiteurl": "website",
+            "webaddress": "website",
+            "url": "website",
+            "domain": "website",
+            "industry": "sector",
+            "sector": "sector",
+            "notes": "notes",
+            "note": "notes",
+            "comments": "notes",
+            "comment": "notes",
+            "address": "address",
+            "streetaddress": "address",
+            "mailingaddress": "address",
+            "address1": "address_1",
+            "streetaddress1": "address_1",
+            "mailingaddress1": "address_1",
+            "address2": "address_2",
+            "streetaddress2": "address_2",
+            "mailingaddress2": "address_2",
+            "address3": "address_3",
+            "streetaddress3": "address_3",
+            "mailingaddress3": "address_3",
+            "address4": "address_4",
+            "streetaddress4": "address_4",
+            "mailingaddress4": "address_4",
+        }
+        if simplified in aliases:
+            return aliases[simplified]
+        if simplified.startswith("address") and simplified[7:].isdigit():
+            return f"address_{simplified[7:]}"
+        return raw.replace("-", "_").replace(" ", "_")
 
     def _get_value(self, row: dict[str, str], *names: str) -> str:
         normalized = {self._normalize_header(k): (v or "") for k, v in row.items()}
