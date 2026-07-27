@@ -34,6 +34,29 @@ app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="stat
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 
 
+def _request_is_admin(request: Request) -> bool:
+    settings = get_settings()
+    if not settings.auth_enabled:
+        return True
+    return getattr(request.state, "auth_role", "") == "admin"
+
+
+def _template_context(request: Request, **extra):
+    context = {
+        "request": request,
+        "app_version": _app_version(),
+        "is_admin": _request_is_admin(request),
+    }
+    context.update(extra)
+    return context
+
+
+def _require_admin(request: Request) -> None:
+    if _request_is_admin(request):
+        return
+    raise HTTPException(status_code=403, detail="Admin access required")
+
+
 def _app_version() -> str:
     env_candidates = [
         os.getenv("RENDER_GIT_COMMIT", "").strip(),
@@ -62,8 +85,10 @@ def _app_version() -> str:
 @app.middleware("http")
 async def basic_auth_guard(request: Request, call_next):
     settings = get_settings()
+    request.state.auth_role = ""
     # Enable protection only when both values are configured.
     if not settings.auth_enabled:
+        request.state.auth_role = "admin"
         return await call_next(request)
 
     auth = request.headers.get("Authorization", "")
@@ -87,22 +112,32 @@ async def basic_auth_guard(request: Request, call_next):
             headers={"WWW-Authenticate": 'Basic realm="HyperTarget"'},
         )
 
-    if not (
-        secrets.compare_digest(username, settings.app_username)
-        and secrets.compare_digest(password, settings.app_password)
+    auth_role = ""
+    if settings.admin_enabled and (
+        secrets.compare_digest(username, settings.admin_username)
+        and secrets.compare_digest(password, settings.admin_password)
     ):
+        auth_role = "admin"
+    elif settings.user_enabled and (
+        secrets.compare_digest(username, settings.user_username)
+        and secrets.compare_digest(password, settings.user_password)
+    ):
+        auth_role = "user"
+
+    if not auth_role:
         return Response(
             content="Invalid credentials",
             status_code=401,
             headers={"WWW-Authenticate": 'Basic realm="HyperTarget"'},
         )
 
+    request.state.auth_role = auth_role
     return await call_next(request)
 
 
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request, "app_version": _app_version()})
+    return templates.TemplateResponse("index.html", _template_context(request))
 
 
 @app.get("/healthz")
@@ -116,6 +151,8 @@ async def status():
     return {
         "app_version": _app_version(),
         "auth_enabled": settings.auth_enabled,
+        "admin_enabled": settings.admin_enabled,
+        "user_enabled": settings.user_enabled,
         "gpt_enabled": settings.gpt_enabled,
         "llm_contact_enrichment_enabled": settings.enable_llm_contact_enrichment,
         "openai_model": settings.openai_model,
@@ -127,6 +164,7 @@ async def status():
 
 @app.get("/admin/exports", response_class=HTMLResponse)
 async def admin_exports(request: Request):
+    _require_admin(request)
     exports_dir = BASE_DIR.parent / "reports" / "exports"
     exports_dir.mkdir(parents=True, exist_ok=True)
     files = []
@@ -142,28 +180,13 @@ async def admin_exports(request: Request):
                 "drive_url": drive_meta.get("web_view_link", ""),
             }
         )
-    return templates.TemplateResponse(
-        "admin_exports.html",
-        {
-            "request": request,
-            "files": files,
-            "app_version": _app_version(),
-            "google_drive_enabled": get_settings().google_drive_enabled,
-        },
-    )
+    return templates.TemplateResponse("admin_exports.html", _template_context(request, files=files, google_drive_enabled=get_settings().google_drive_enabled))
 
 
 @app.get("/admin/batches", response_class=HTMLResponse)
 async def admin_batches(request: Request):
-    return templates.TemplateResponse(
-        "admin_batches.html",
-        {
-            "request": request,
-            "app_version": _app_version(),
-            "batch": None,
-            "error": "",
-        },
-    )
+    _require_admin(request)
+    return templates.TemplateResponse("admin_batches.html", _template_context(request, batch=None, error=""))
 
 
 @app.post("/admin/batches", response_class=HTMLResponse)
@@ -172,15 +195,11 @@ async def run_admin_batch(
     file: UploadFile = File(...),
     include_confidence: bool = Form(False),
 ):
+    _require_admin(request)
     if not file.filename or not file.filename.lower().endswith(".csv"):
         return templates.TemplateResponse(
             "admin_batches.html",
-            {
-                "request": request,
-                "app_version": _app_version(),
-                "batch": None,
-                "error": "Upload a CSV file.",
-            },
+            _template_context(request, batch=None, error="Upload a CSV file."),
             status_code=400,
         )
 
@@ -194,12 +213,7 @@ async def run_admin_batch(
     except Exception as exc:
         return templates.TemplateResponse(
             "admin_batches.html",
-            {
-                "request": request,
-                "app_version": _app_version(),
-                "batch": None,
-                "error": str(exc),
-            },
+            _template_context(request, batch=None, error=str(exc)),
             status_code=400,
         )
 
@@ -208,22 +222,16 @@ async def run_admin_batch(
 
 @app.get("/admin/batches/{batch_id}", response_class=HTMLResponse)
 async def admin_batch_detail(request: Request, batch_id: str):
+    _require_admin(request)
     batch = batch_service.get_batch(batch_id)
     if not batch:
         raise HTTPException(status_code=404, detail="Batch not found")
-    return templates.TemplateResponse(
-        "admin_batches.html",
-        {
-            "request": request,
-            "app_version": _app_version(),
-            "batch": batch,
-            "error": "",
-        },
-    )
+    return templates.TemplateResponse("admin_batches.html", _template_context(request, batch=batch, error=""))
 
 
 @app.get("/admin/batches/{batch_id}/files/{filename}")
-async def admin_batch_download(batch_id: str, filename: str):
+async def admin_batch_download(request: Request, batch_id: str, filename: str):
+    _require_admin(request)
     path = batch_service.get_batch_file(batch_id, filename)
     if not path:
         raise HTTPException(status_code=404, detail="Batch file not found")
@@ -239,18 +247,18 @@ async def admin_batch_download(batch_id: str, filename: str):
 
 @app.get("/admin/config", response_class=HTMLResponse)
 async def admin_config(request: Request):
+    _require_admin(request)
     report_copy_path = DATA_DIR / "report_copy.json"
     web_policy_path = DATA_DIR / "web_research_policy.json"
     return templates.TemplateResponse(
         "admin_config.html",
-        {
-            "request": request,
-            "app_version": _app_version(),
-            "report_copy_json": json.dumps(json.loads(report_copy_path.read_text()), indent=2),
-            "web_research_policy_json": json.dumps(json.loads(web_policy_path.read_text()), indent=2),
-            "saved": request.query_params.get("saved") == "1",
-            "error": request.query_params.get("error", ""),
-        },
+        _template_context(
+            request,
+            report_copy_json=json.dumps(json.loads(report_copy_path.read_text()), indent=2),
+            web_research_policy_json=json.dumps(json.loads(web_policy_path.read_text()), indent=2),
+            saved=request.query_params.get("saved") == "1",
+            error=request.query_params.get("error", ""),
+        ),
     )
 
 
@@ -260,47 +268,45 @@ async def save_admin_config(
     report_copy_json: str = Form(...),
     web_research_policy_json: str = Form(...),
 ):
+    _require_admin(request)
     try:
         parsed_report_copy = json.loads(report_copy_json)
         parsed_web_policy = json.loads(web_research_policy_json)
     except Exception as exc:
         return templates.TemplateResponse(
             "admin_config.html",
-            {
-                "request": request,
-                "app_version": _app_version(),
-                "report_copy_json": report_copy_json,
-                "web_research_policy_json": web_research_policy_json,
-                "saved": False,
-                "error": f"Invalid JSON: {exc}",
-            },
+            _template_context(
+                request,
+                report_copy_json=report_copy_json,
+                web_research_policy_json=web_research_policy_json,
+                saved=False,
+                error=f"Invalid JSON: {exc}",
+            ),
             status_code=400,
         )
 
     if not isinstance(parsed_report_copy, dict):
         return templates.TemplateResponse(
             "admin_config.html",
-            {
-                "request": request,
-                "app_version": _app_version(),
-                "report_copy_json": report_copy_json,
-                "web_research_policy_json": web_research_policy_json,
-                "saved": False,
-                "error": "report_copy.json must be a JSON object.",
-            },
+            _template_context(
+                request,
+                report_copy_json=report_copy_json,
+                web_research_policy_json=web_research_policy_json,
+                saved=False,
+                error="report_copy.json must be a JSON object.",
+            ),
             status_code=400,
         )
     if not isinstance(parsed_web_policy, dict):
         return templates.TemplateResponse(
             "admin_config.html",
-            {
-                "request": request,
-                "app_version": _app_version(),
-                "report_copy_json": report_copy_json,
-                "web_research_policy_json": web_research_policy_json,
-                "saved": False,
-                "error": "web_research_policy.json must be a JSON object.",
-            },
+            _template_context(
+                request,
+                report_copy_json=report_copy_json,
+                web_research_policy_json=web_research_policy_json,
+                saved=False,
+                error="web_research_policy.json must be a JSON object.",
+            ),
             status_code=400,
         )
 
@@ -309,27 +315,26 @@ async def save_admin_config(
     if missing_copy:
         return templates.TemplateResponse(
             "admin_config.html",
-            {
-                "request": request,
-                "app_version": _app_version(),
-                "report_copy_json": report_copy_json,
-                "web_research_policy_json": web_research_policy_json,
-                "saved": False,
-                "error": f"report_copy.json is missing required keys: {', '.join(missing_copy)}",
-            },
+            _template_context(
+                request,
+                report_copy_json=report_copy_json,
+                web_research_policy_json=web_research_policy_json,
+                saved=False,
+                error=f"report_copy.json is missing required keys: {', '.join(missing_copy)}",
+            ),
             status_code=400,
         )
 
     if "priority_link_terms" not in parsed_web_policy or not isinstance(parsed_web_policy.get("priority_link_terms"), list):
         return templates.TemplateResponse(
             "admin_config.html",
-            {
-                "request": request,
-                "report_copy_json": report_copy_json,
-                "web_research_policy_json": web_research_policy_json,
-                "saved": False,
-                "error": "web_research_policy.json must include a list key: priority_link_terms",
-            },
+            _template_context(
+                request,
+                report_copy_json=report_copy_json,
+                web_research_policy_json=web_research_policy_json,
+                saved=False,
+                error="web_research_policy.json must include a list key: priority_link_terms",
+            ),
             status_code=400,
         )
 
@@ -339,7 +344,8 @@ async def save_admin_config(
 
 
 @app.get("/admin/exports/{filename}")
-async def admin_download_export(filename: str):
+async def admin_download_export(request: Request, filename: str):
+    _require_admin(request)
     if "/" in filename or "\\" in filename or not filename.endswith(".docx"):
         raise HTTPException(status_code=400, detail="Invalid file name")
     exports_dir = BASE_DIR.parent / "reports" / "exports"
@@ -357,11 +363,7 @@ async def admin_download_export(filename: str):
 async def designation_explorer(request: Request):
     return templates.TemplateResponse(
         "designation_explorer.html",
-        {
-            "request": request,
-            "app_version": _app_version(),
-            "google_maps_api_key": os.getenv("GOOGLE_MAPS_API_KEY", ""),
-        },
+        _template_context(request, google_maps_api_key=os.getenv("GOOGLE_MAPS_API_KEY", "")),
     )
 
 
@@ -405,7 +407,7 @@ async def report_page(request: Request, report_id: str):
     report = service.get_report(report_id)
     if not report:
         raise HTTPException(status_code=404, detail="Report not found")
-    return templates.TemplateResponse("report.html", {"request": request, "report": report, "app_version": _app_version()})
+    return templates.TemplateResponse("report.html", _template_context(request, report=report))
 
 
 @app.get("/api/reports/{report_id}")

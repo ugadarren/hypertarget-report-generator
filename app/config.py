@@ -11,8 +11,10 @@ DEFAULT_ARCGIS_VIEWER_URL = "https://experience.arcgis.com/experience/e655a4ebd5
 
 @dataclass(frozen=True)
 class Settings:
-    app_username: str
-    app_password: str
+    admin_username: str
+    admin_password: str
+    user_username: str
+    user_password: str
     openai_api_key: str
     openai_model: str
     openai_timeout_seconds: float
@@ -24,7 +26,15 @@ class Settings:
 
     @property
     def auth_enabled(self) -> bool:
-        return bool(self.app_username and self.app_password)
+        return self.admin_enabled or self.user_enabled
+
+    @property
+    def admin_enabled(self) -> bool:
+        return bool(self.admin_username and self.admin_password)
+
+    @property
+    def user_enabled(self) -> bool:
+        return bool(self.user_username and self.user_password)
 
     @property
     def gpt_enabled(self) -> bool:
@@ -49,8 +59,10 @@ def get_settings() -> Settings:
     enable_contact_llm = enable_contact_llm_raw not in {"0", "false", "no", "off"}
 
     return Settings(
-        app_username=os.getenv("APP_USERNAME", "").strip(),
-        app_password=os.getenv("APP_PASSWORD", "").strip(),
+        admin_username=os.getenv("APP_USERNAME", "").strip(),
+        admin_password=os.getenv("APP_PASSWORD", "").strip(),
+        user_username=os.getenv("USER_USERNAME", "").strip(),
+        user_password=os.getenv("USER_PASSWORD", "").strip(),
         openai_api_key=os.getenv("OPENAI_API_KEY", "").strip(),
         openai_model=os.getenv("OPENAI_MODEL", DEFAULT_OPENAI_MODEL).strip() or DEFAULT_OPENAI_MODEL,
         openai_timeout_seconds=timeout,

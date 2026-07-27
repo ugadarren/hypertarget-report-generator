@@ -11,10 +11,12 @@
       <section class="hero">
         <h1>Tax Incentive Report Generator</h1>
         <p>Enter the company name, website URL, address(es), and any optional notes to create an Incentive Report.</p>
+        {% if is_admin %}
         <p>
           <a class="button-link" href="/admin/exports">Open Admin Exports</a>
           <a class="button-link" href="/admin/batches">Open Batch Upload</a>
         </p>
+        {% endif %}
       </section>
 
       <form class="card" method="post" action="/generate">
